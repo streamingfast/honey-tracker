@@ -10,10 +10,10 @@ import (
 
 type Sinker struct {
 	*sink.Sinker
-	db *DB
+	db DB
 }
 
-func NewSinker(sink *sink.Sinker, db *DB) *Sinker {
+func NewSinker(sink *sink.Sinker, db DB) *Sinker {
 	return &Sinker{
 		Sinker: sink,
 		db:     db,

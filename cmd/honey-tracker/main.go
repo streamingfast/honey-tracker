@@ -1,52 +1,57 @@
 package main
 
 import (
-	"context"
-
 	"github.com/streamingfast/honey-tracker/data"
-	sink "github.com/streamingfast/substreams-sink"
-	"github.com/streamingfast/substreams/client"
-	"go.uber.org/zap"
 )
 
 func main() {
-	logger, _ := zap.NewProduction()
+	//logger, _ := zap.NewProduction()
+	//
+	//endpoint := ""
+	//apiToken := ""
+	//manifestPath := ""
+	//outputModuleName := ""
+	//expectedOutputModuleType := ""
+	//
+	//flagInsecure := false
+	//flagPlaintext := false
 
-	endpoint := ""
-	apiToken := ""
-	manifestPath := ""
-	outputModuleName := ""
-	expectedOutputModuleType := ""
-
-	flagInsecure := false
-	flagPlaintext := false
-
-	clientConfig := client.NewSubstreamsClientConfig(
-		endpoint,
-		apiToken,
-		flagInsecure,
-		flagPlaintext,
-	)
-
-	pkg, module, outputModuleHash, err := sink.ReadManifestAndModule(manifestPath, outputModuleName, expectedOutputModuleType, logger)
+	db := data.NewPostgreSQL(&data.PsqlInfo{
+		Host:     "localhost",
+		Port:     5432,
+		User:     "cbillett",
+		Password: "secureme",
+		Dbname:   "hivemapper",
+	})
+	err := db.Init()
 	checkError(err)
 
-	s, err := sink.New(
-		sink.SubstreamsModeProduction,
-		pkg,
-		module,
-		outputModuleHash,
-		clientConfig,
-		logger,
-		nil,
-	)
-	checkError(err)
+	//clientConfig := client.NewSubstreamsClientConfig(
+	//	endpoint,
+	//	apiToken,
+	//	flagInsecure,
+	//	flagPlaintext,
+	//)
+	//
+	//pkg, module, outputModuleHash, err := sink.ReadManifestAndModule(manifestPath, outputModuleName, expectedOutputModuleType, logger)
+	//checkError(err)
+	//
+	//s, err := sink.New(
+	//	sink.SubstreamsModeProduction,
+	//	pkg,
+	//	module,
+	//	outputModuleHash,
+	//	clientConfig,
+	//	logger,
+	//	nil,
+	//)
+	//checkError(err)
 
-	ctx := context.Background()
-	sinker := data.NewSinker(s)
-	go func() {
-		sinker.Run(ctx)
-	}()
+	//ctx := context.Background()
+	//sinker := data.NewSinker(s, db)
+	//go func() {
+	//	sinker.Run(ctx)
+	//}()
 }
 
 func checkError(err error) {
