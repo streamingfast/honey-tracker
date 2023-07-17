@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	pb "github.com/streamingfast/honey-tracker/data/pb/hivemapper/v1"
 	sink "github.com/streamingfast/substreams-sink"
 	pbsubstreamsrpc "github.com/streamingfast/substreams/pb/sf/substreams/rpc/v2"
+	"google.golang.org/protobuf/proto"
 )
 
 type Sinker struct {
@@ -33,14 +35,54 @@ func (s *Sinker) HandleBlockScopedData(ctx context.Context, data *pbsubstreamsrp
 		return fmt.Errorf("received data from wrong output module, expected to received from %q but got module's output for %q", s.OutputModuleName(), output.Name)
 	}
 
-	//todo: unmarshal proto data
+	//todo: start db transaction
 
-	//todo: switch data := data.Data.(type)
-	//todo then call db methods
+	//todo: handle block clock
+	dbBlockID, err := s.db.HandleClock(data.Clock)
+	if err != nil {
+		return fmt.Errorf("handle block clock: %w", err)
+	}
+	moduleOutput := &pb.Output{}
+	err = proto.Unmarshal(output.GetMapOutput().GetValue(), moduleOutput)
+	if err != nil {
+		return fmt.Errorf("unmarshal module output changes: %w", err)
+	}
+
+	if err := s.db.HandlePayments(dbBlockID, moduleOutput.DriverPayments); err != nil {
+		return fmt.Errorf("handle payments: %w", err)
+	}
+
+	if err := s.db.HandleSplitPayments(dbBlockID, moduleOutput.TokenSplittingPayments); err != nil {
+		return fmt.Errorf("handle split payments: %w", err)
+	}
+
+	if err := s.db.HandleTransfers(dbBlockID, moduleOutput.Transfers); err != nil {
+		return fmt.Errorf("handle transfers: %w", err)
+	}
+
+	if err := s.db.HandleMints(dbBlockID, moduleOutput.Mints); err != nil {
+		return fmt.Errorf("handle mints: %w", err)
+	}
+
+	if err := s.db.HandleBurns(dbBlockID, moduleOutput.Burns); err != nil {
+		return fmt.Errorf("handle burns: %w", err)
+	}
+
+	if err := s.db.HandleTransferCheckeds(dbBlockID, moduleOutput.TransferChecks); err != nil {
+		return fmt.Errorf("handle transfer checks: %w", err)
+	}
+
+	if err := s.db.HandleMintCheckeds(dbBlockID, moduleOutput.MintToChecks); err != nil {
+		return fmt.Errorf("handle mint checks: %w", err)
+	}
+
+	if err := s.db.HandleBurnChecks(dbBlockID, moduleOutput.BurnChecks); err != nil {
+		return fmt.Errorf("handle burn checks: %w", err)
+	}
 
 	//todo: save cursor
-
-	panic("implement me")
+	//todo: commit transaction
+	return nil
 }
 
 func (s *Sinker) HandleBlockUndoSignal(ctx context.Context, undoSignal *pbsubstreamsrpc.BlockUndoSignal, cursor *sink.Cursor) error {

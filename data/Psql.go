@@ -6,6 +6,7 @@ import (
 
 	_ "github.com/lib/pq"
 	pb "github.com/streamingfast/honey-tracker/data/pb/hivemapper/v1"
+	pbsubstreams "github.com/streamingfast/substreams/pb/sf/substreams/v1"
 )
 
 type Psql struct {
@@ -46,43 +47,214 @@ func (p *Psql) Init() error {
 
 	return nil
 }
+func (p *Psql) HandleClock(clock *pbsubstreams.Clock) (dbBlockID int64, err error) {
+	result, err := p.db.Exec("INSERT INTO hivemapper.clock (block_num, block_id, block_time) VALUES ($1, $2, $3)", clock.Number, clock.Id, clock.Timestamp)
+	if err != nil {
+		return 0, fmt.Errorf("inserting clock: %w", err)
+	}
 
-func (p *Psql) HandlePayment(payment *pb.DriverPayment) error {
+	return result.LastInsertId()
+}
+
+func (p *Psql) handleTransaction(dbBlockID int64, transactionHash string) (dbTransactionID int64, err error) {
+	//todo: create a transaction cache
+	rows, err := p.db.Query("SELECT id FROM hivemapper.transactions WHERE hash = $1", transactionHash)
+	if rows.Next() {
+		err = rows.Scan(&dbTransactionID)
+		return
+	}
+
+	if err != nil {
+		result, err := p.db.Exec("INSERT INTO hivemapper.transactions (hash, block_id) VALUES ($1, $2)", transactionHash, dbBlockID)
+		if err != nil {
+			return 0, fmt.Errorf("inserting transaction: %w", err)
+		}
+		return result.LastInsertId()
+	}
+	return
+}
+
+func (p *Psql) handleInitializedAccount(dbTransactionID int64, initializedAccounts []*pb.InitializedAccount) (err error) {
+	for _, initializedAccount := range initializedAccounts {
+		_, err := p.db.Exec("INSERT INTO hivemapper.deriveAddresses (transaction_id, address, deriveAddress) VALUES ($1, $2, $3)", dbTransactionID, initializedAccount.Owner, initializedAccount.Account)
+		if err != nil {
+			return fmt.Errorf("inserting deriveAddresses: %w", err)
+		}
+	}
+	return nil
+}
+
+//todo: fetch address from deriveAddresses
+
+func (p *Psql) handleDriver(dbTransactionID int64, driverAddress string) (dbDriverID int64, err error) {
+	//todo: create cache
+	rows, err := p.db.Query("SELECT id FROM hivemapper.drivers WHERE address = $1", driverAddress)
+	if rows.Next() {
+		err = rows.Scan(&dbDriverID)
+		return
+	}
+
+	if err != nil {
+		result, err := p.db.Exec("INSERT INTO hivemapper.drivers (address, transaction_id) VALUES ($1, $2)", driverAddress, dbTransactionID)
+		if err != nil {
+			return 0, fmt.Errorf("inserting driver: %w", err)
+		}
+		return result.LastInsertId()
+	}
+	return
+}
+
+func (p *Psql) handleFleet(dbTransactionID int64, fleetAddress string) (dbDriverID int64, err error) {
+	//todo: create cache
+	rows, err := p.db.Query("SELECT id FROM hivemapper.fleets WHERE address = $1", fleetAddress)
+	if rows.Next() {
+		err = rows.Scan(&dbDriverID)
+		return
+	}
+
+	if err != nil {
+		result, err := p.db.Exec("INSERT INTO hivemapper.fleets (address, transaction_id) VALUES ($1, $2)", fleetAddress, dbTransactionID)
+		if err != nil {
+			return 0, fmt.Errorf("inserting driver: %w", err)
+		}
+		return result.LastInsertId()
+	}
+	return
+}
+
+func (p *Psql) handleFleetDriver(dbTransactionID int64, dbFleetID int64, dbDriverID int64) (dbFleetDriverID int64, err error) {
+	//todo: create cache
+	rows, err := p.db.Query("SELECT id FROM hivemapper.fleet_drivers WHERE fleet_id = $1 and driver_id = $2", dbFleetID, dbDriverID)
+	if rows.Next() {
+		err = rows.Scan(&dbDriverID)
+		return
+	}
+
+	if err != nil {
+		result, err := p.db.Exec("INSERT INTO hivemapper.fleet_drivers (transaction_id, fleet_id, driver_id) VALUES ($1, $2, $3)", dbTransactionID, dbFleetID, dbDriverID)
+		if err != nil {
+			return 0, fmt.Errorf("inserting driver: %w", err)
+		}
+		return result.LastInsertId()
+	}
+	return
+}
+
+func (p *Psql) HandlePayment(dbBlockID int64, payments []*pb.Payment) error {
+	for _, payment := range payments {
+		dbTransactionID, err := p.handleTransaction(dbBlockID, payment.Mint.TrxHash)
+		if err != nil {
+			return fmt.Errorf("inserting transaction: %w", err)
+		}
+
+		driverID, err := p.handleDriver(dbTransactionID, payment.Mint.To)
+		if err != nil {
+			return fmt.Errorf("handling driver: %w", err)
+		}
+
+		_, err = p.db.Exec("INSERT INTO hivemapper.payments (driver_id, transaction_id, amount) VALUES ($1, $2, $3)", driverID, dbTransactionID, payment.Payment.Amount)
+	}
+	return nil
+}
+
+func (p *Psql) HandleSplitPayment(dbBlockID int64, splitPayments []*pb.TokenSplittingPayment) error {
+	for _, payment := range splitPayments {
+		dbTransactionID, err := p.handleTransaction(dbBlockID, payment.ManagerMint.TrxHash)
+		if err != nil {
+			return fmt.Errorf("inserting transaction: %w", err)
+		}
+
+		//todo: look up driver by derived address
+		driverAddress := payment.DriverMint.To
+
+		//todo: look up driver by derived address
+		fleetAddress := payment.ManagerMint.To
+		fleetID, err := p.handleFleet(dbTransactionID, fleetAddress)
+		if err != nil {
+			return fmt.Errorf("handling driver: %w", err)
+		}
+
+		driverID, err := p.handleDriver(dbTransactionID, driverAddress)
+		if err != nil {
+			return fmt.Errorf("handling driver: %w", err)
+		}
+
+		_, err = p.handleFleetDriver(dbTransactionID, fleetID, driverID)
+		if err != nil {
+			return fmt.Errorf("handling fleet driver: %w", err)
+		}
+
+		fleetMintID, err := p.insertMint(dbTransactionID, payment.ManagerMint)
+		if err != nil {
+			return fmt.Errorf("inserting fleet mint: %w", err)
+		}
+
+		driverMintID, err := p.insertMint(dbTransactionID, payment.DriverMint)
+		if err != nil {
+			return fmt.Errorf("inserting driver mint: %w", err)
+		}
+
+		_, err = p.db.Exec("INSERT INTO hivemapper.split_payments (driver_id, fleet_id, transaction_id, fleet_mint_id, driver_mint_id) VALUES ($1, $2, $3, $4, $5)", driverID, fleetID, dbTransactionID, fleetMintID, driverMintID)
+		if err != nil {
+			return fmt.Errorf("inserting split payment: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func (p *Psql) HandleTransfers(dbBlockID int64, transfers []*pb.Transfer) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (p *Psql) HandleSplitPayment(splitPayment *pb.TokenSplittingPayment) error {
+func (p *Psql) insertMint(dbTransactionID int64, mint *pb.Mint) (dbMintID int64, err error) {
+	result, err := p.db.Exec("INSERT INTO hivemapper.mints (transaction_id, to_address, amount) VALUES ($1, $2, $3)", dbTransactionID, mint.To, mint.Amount)
+	if err != nil {
+		return 0, fmt.Errorf("inserting mint: %w", err)
+	}
+	return result.LastInsertId()
+}
+
+func (p *Psql) HandleMints(dbBlockID int64, mints []*pb.Mint) error {
+	for _, mint := range mints {
+		dbTransactionID, err := p.handleTransaction(dbBlockID, mint.TrxHash)
+		if err != nil {
+			return fmt.Errorf("inserting transaction: %w", err)
+		}
+
+		_, err = p.insertMint(dbTransactionID, mint)
+		if err != nil {
+			return fmt.Errorf("inserting mint: %w", err)
+		}
+	}
+	return nil
+}
+
+func (p *Psql) insertBurns(dbTransactionID int64, burn *pb.Burn) (dbMintID int64, err error) {
+	result, err := p.db.Exec("INSERT INTO hivemapper.burns (transaction_id, from_address, amount) VALUES ($1, $2, $3)", dbTransactionID, burn.From, burn.Amount)
+	if err != nil {
+		return 0, fmt.Errorf("inserting burn: %w", err)
+	}
+	return result.LastInsertId()
+}
+
+func (p *Psql) HandleBurns(dbBlockID int64, burns []*pb.Burn) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (p *Psql) HandleTransfer(transfer *pb.Transfer) error {
+func (p *Psql) HandleTransferCheckeds(dbBlockID int64, transferChecks []*pb.TransferChecked) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (p *Psql) HandleMint(mint *pb.Mint) error {
+func (p *Psql) HandleMintChecked(dbBlockID int64, transferChecks []*pb.MintToChecked) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (p *Psql) HandleBurn(burn *pb.Burn) error {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (p *Psql) HandleTransferChecked(transferCheck *pb.TransferChecked) error {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (p *Psql) HandleMintChecked(transferCheck *pb.MintToChecked) error {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (p *Psql) HandleBurnCheck(transferCheck *pb.BurnChecked) error {
+func (p *Psql) HandleBurnChecks(dbBlockID int64, transferChecks []*pb.BurnChecked) error {
 	//TODO implement me
 	panic("implement me")
 }
