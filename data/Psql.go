@@ -78,9 +78,13 @@ func (p *Psql) handleTransaction(dbBlockID int64, transactionHash string) (dbTra
 	return
 }
 
-func (p *Psql) handleInitializedAccount(dbTransactionID int64, initializedAccounts []*pb.InitializedAccount) (err error) {
+func (p *Psql) HandleInitializedAccount(dbBlockID int64, initializedAccounts []*pb.InitializedAccount) (err error) {
 	for _, initializedAccount := range initializedAccounts {
-		_, err := p.db.Exec("INSERT INTO hivemapper.deriveAddresses (transaction_id, address, deriveAddress) VALUES ($1, $2, $3)", dbTransactionID, initializedAccount.Owner, initializedAccount.Account)
+		dbTransactionID, err := p.handleTransaction(dbBlockID, initializedAccount.TrxHash)
+		if err != nil {
+			return fmt.Errorf("handling transaction: %w", err)
+		}
+		_, err = p.db.Exec("INSERT INTO hivemapper.deriveAddresses (transaction_id, address, deriveAddress) VALUES ($1, $2, $3)", dbTransactionID, initializedAccount.Owner, initializedAccount.Account)
 		if err != nil {
 			return fmt.Errorf("inserting deriveAddresses: %w", err)
 		}
@@ -155,7 +159,7 @@ func (p *Psql) handleFleetDriver(dbTransactionID int64, dbFleetID int64, dbDrive
 	return
 }
 
-func (p *Psql) HandlePayment(dbBlockID int64, payments []*pb.Payment) error {
+func (p *Psql) HandlePayments(dbBlockID int64, payments []*pb.Payment) error {
 	for _, payment := range payments {
 		dbTransactionID, err := p.handleTransaction(dbBlockID, payment.Mint.TrxHash)
 		if err != nil {
@@ -170,7 +174,7 @@ func (p *Psql) HandlePayment(dbBlockID int64, payments []*pb.Payment) error {
 	return nil
 }
 
-func (p *Psql) HandleNoneSplitPayment(dbBlockID int64, payments []*pb.NoSplitPayment) error {
+func (p *Psql) HandleNoneSplitPayments(dbBlockID int64, payments []*pb.NoSplitPayment) error {
 	for _, payment := range payments {
 		dbTransactionID, err := p.handleTransaction(dbBlockID, payment.Mint.TrxHash)
 		if err != nil {
@@ -187,7 +191,7 @@ func (p *Psql) HandleNoneSplitPayment(dbBlockID int64, payments []*pb.NoSplitPay
 	return nil
 }
 
-func (p *Psql) HandleSplitPayment(dbBlockID int64, splitPayments []*pb.TokenSplittingPayment) error {
+func (p *Psql) HandleSplitPayments(dbBlockID int64, splitPayments []*pb.TokenSplittingPayment) error {
 	for _, payment := range splitPayments {
 		dbTransactionID, err := p.handleTransaction(dbBlockID, payment.ManagerMint.TrxHash)
 		if err != nil {

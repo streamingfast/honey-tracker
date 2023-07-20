@@ -13,7 +13,7 @@ type DB interface {
 	HandlePayments(dbBlockID int64, payments []*pb.Payment) error
 	HandleAiPayments(dbBlockID int64, payments []*pb.AiTrainerPayment) error
 	HandleSplitPayments(dbBlockID int64, splitPayments []*pb.TokenSplittingPayment) error
-	HandleNoneSplitPayment(dbBlockID int64, payments []*pb.NoSplitPayment) error
+	HandleNoneSplitPayments(dbBlockID int64, payments []*pb.NoSplitPayment) error
 	HandleTransfers(dbBlockID int64, transfers []*pb.Transfer) error
 	HandleMints(dbBlockID int64, mints []*pb.Mint) error
 	HandleBurns(dbBlockID int64, burns []*pb.Burn) error
