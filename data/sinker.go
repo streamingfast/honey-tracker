@@ -36,16 +36,18 @@ func (s *Sinker) HandleBlockScopedData(ctx context.Context, data *pbsubstreamsrp
 	}
 
 	//todo: start db transaction
+	var moduleOutput *pb.Output
+	err := proto.Unmarshal(output.GetMapOutput().GetValue(), moduleOutput)
+	if err != nil {
+		return fmt.Errorf("unmarshal module output changes: %w", err)
+	}
 
-	//todo: handle block clock
+	if moduleOutput == nil {
+		return fmt.Errorf("module output is nil")
+	}
 	dbBlockID, err := s.db.HandleClock(data.Clock)
 	if err != nil {
 		return fmt.Errorf("handle block clock: %w", err)
-	}
-	moduleOutput := &pb.Output{}
-	err = proto.Unmarshal(output.GetMapOutput().GetValue(), moduleOutput)
-	if err != nil {
-		return fmt.Errorf("unmarshal module output changes: %w", err)
 	}
 
 	if err := s.db.HandlePayments(dbBlockID, moduleOutput.Payments); err != nil {

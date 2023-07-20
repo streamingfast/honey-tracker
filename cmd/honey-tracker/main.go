@@ -2,11 +2,12 @@ package main
 
 import (
 	"context"
-	"github.com/streamingfast/logging"
-	"go.uber.org/zap"
 	"os"
 
+	"go.uber.org/zap"
+
 	"github.com/streamingfast/honey-tracker/data"
+	"github.com/streamingfast/logging"
 	sink "github.com/streamingfast/substreams-sink"
 	"github.com/streamingfast/substreams/client"
 )
@@ -21,7 +22,7 @@ func main() {
 	logger, tracer := logging.ApplicationLogger("honey-tracker", "honey-tracker")
 
 	endpoint := "mainnet.sol.streamingfast.io:443"
-	manifestPath := "/Users/eduardvoiculescu/git/streamingfast/substreams-hivemapper/substreams.yaml"
+	manifestPath := "/Users/cbillett/devel/sf/substreams-hivemapper/substreams.yaml"
 	outputModuleName := "map_outputs"
 	expectedOutputModuleType := "proto:hivemapper.types.v1.Output"
 
@@ -31,9 +32,9 @@ func main() {
 	db := data.NewPostgreSQL(&data.PsqlInfo{
 		Host:     "localhost",
 		Port:     5432,
-		User:     "eduardvoiculescu",
+		User:     "cbillett",
 		Password: "secureme",
-		Dbname:   "postgres",
+		Dbname:   "hivemapper",
 	})
 	err := db.Init()
 	checkError(err)
