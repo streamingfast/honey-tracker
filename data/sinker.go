@@ -24,9 +24,9 @@ func NewSinker(sink *sink.Sinker, db DB) *Sinker {
 
 func (s *Sinker) Run(ctx context.Context) {
 	//todo: get cursor
-	var cursor *sink.Cursor
+	//var cursor *sink.Cursor
 
-	s.Sinker.Run(ctx, cursor, s)
+	s.Sinker.Run(ctx, nil, s)
 }
 
 func (s *Sinker) HandleBlockScopedData(ctx context.Context, data *pbsubstreamsrpc.BlockScopedData, isLive *bool, cursor *sink.Cursor) error {
