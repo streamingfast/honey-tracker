@@ -48,7 +48,7 @@ func (s *Sinker) HandleBlockScopedData(ctx context.Context, data *pbsubstreamsrp
 		return fmt.Errorf("unmarshal module output changes: %w", err)
 	}
 
-	if err := s.db.HandlePayments(dbBlockID, moduleOutput.DriverPayments); err != nil {
+	if err := s.db.HandlePayments(dbBlockID, moduleOutput.Payments); err != nil {
 		return fmt.Errorf("handle payments: %w", err)
 	}
 
@@ -66,18 +66,6 @@ func (s *Sinker) HandleBlockScopedData(ctx context.Context, data *pbsubstreamsrp
 
 	if err := s.db.HandleBurns(dbBlockID, moduleOutput.Burns); err != nil {
 		return fmt.Errorf("handle burns: %w", err)
-	}
-
-	if err := s.db.HandleTransferCheckeds(dbBlockID, moduleOutput.TransferChecks); err != nil {
-		return fmt.Errorf("handle transfer checks: %w", err)
-	}
-
-	if err := s.db.HandleMintCheckeds(dbBlockID, moduleOutput.MintToChecks); err != nil {
-		return fmt.Errorf("handle mint checks: %w", err)
-	}
-
-	if err := s.db.HandleBurnChecks(dbBlockID, moduleOutput.BurnChecks); err != nil {
-		return fmt.Errorf("handle burn checks: %w", err)
 	}
 
 	//todo: save cursor
