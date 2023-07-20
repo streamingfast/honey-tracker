@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"github.com/streamingfast/logging"
+	"go.uber.org/zap"
 	"os"
 
 	"github.com/streamingfast/honey-tracker/data"
@@ -61,6 +62,9 @@ func main() {
 
 	ctx := context.Background()
 	sinker := data.NewSinker(s, db)
+	sinker.OnTerminating(func(err error) {
+		logger.Error("sinker terminating", zap.Error(err))
+	})
 	sinker.Run(ctx)
 }
 

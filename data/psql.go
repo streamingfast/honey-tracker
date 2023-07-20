@@ -49,7 +49,7 @@ func (p *Psql) Init() error {
 	return nil
 }
 func (p *Psql) HandleClock(clock *pbsubstreams.Clock) (dbBlockID int64, err error) {
-	result, err := p.db.Exec("INSERT INTO hivemapper.clock (block_num, block_id, block_time) VALUES ($1, $2, $3)", clock.Number, clock.Id, clock.Timestamp)
+	result, err := p.db.Exec("INSERT INTO hivemapper.blocks (number, hash, timestamp) VALUES ($1, $2, $3)", clock.Number, clock.Id, clock.Timestamp.AsTime())
 	if err != nil {
 		return 0, fmt.Errorf("inserting clock: %w", err)
 	}
