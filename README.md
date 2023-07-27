@@ -8,7 +8,7 @@ go install ./cmd/honey-tracker
 
 ### Run postgres from docker
 ```bash
-docker run --rm --name postgres -p 5432:5432 -e POSTGRES_USER=<replace_with_your_user_of_choice> -e POSTGRES_PASSWORD=secureme -d postgres
+docker run --rm --name postgres -p 5432:5432 -e POSTGRES_USER=<replace_with_your_user_of_choice> -e POSTGRES_PASSWORD=<password_of_choice> -d postgres
 ```
 
 ### Create schema
