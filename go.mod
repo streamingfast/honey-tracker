@@ -6,9 +6,12 @@ replace github.com/streamingfast/substreams-sink => ../substreams-sink
 
 require (
 	github.com/lib/pq v1.10.9
+	github.com/spf13/cobra v1.6.1
+	github.com/streamingfast/cli v0.0.4-0.20230508203625-ecd532feb120
 	github.com/streamingfast/logging v0.0.0-20221209193439-bff11742bf4c
 	github.com/streamingfast/substreams v1.1.8-0.20230705171054-90758978ac9c
 	github.com/streamingfast/substreams-sink v0.2.7-0.20230719224959-1bfb0e880c43
+	go.uber.org/zap v1.24.0
 	google.golang.org/protobuf v1.30.0
 )
 
@@ -89,13 +92,11 @@ require (
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	github.com/spf13/afero v1.9.3 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
-	github.com/spf13/cobra v1.6.1 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.15.0 // indirect
 	github.com/streamingfast/atm v0.0.0-20220131151839-18c87005e680 // indirect
 	github.com/streamingfast/bstream v0.0.2-0.20230510131449-6b591d74130d // indirect
-	github.com/streamingfast/cli v0.0.4-0.20230508203625-ecd532feb120 // indirect
 	github.com/streamingfast/dbin v0.0.0-20210809205249-73d5eca35dc5 // indirect
 	github.com/streamingfast/derr v0.0.0-20230515163924-8570aaa43fe1 // indirect
 	github.com/streamingfast/dgrpc v0.0.0-20230621153617-bc715cdb9fd1 // indirect
@@ -116,7 +117,6 @@ require (
 	go.opentelemetry.io/otel/trace v1.16.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	go.uber.org/zap v1.24.0 // indirect
 	golang.org/x/crypto v0.6.0 // indirect
 	golang.org/x/exp v0.0.0-20230213192124-5e25df0256eb // indirect
 	golang.org/x/mod v0.8.0 // indirect

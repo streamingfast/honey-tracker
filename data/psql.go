@@ -49,12 +49,14 @@ func (p *Psql) Init() error {
 	return nil
 }
 func (p *Psql) HandleClock(clock *pbsubstreams.Clock) (dbBlockID int64, err error) {
-	result, err := p.db.Exec("INSERT INTO hivemapper.blocks (number, hash, timestamp) VALUES ($1, $2, $3)", clock.Number, clock.Id, clock.Timestamp.AsTime())
+	row := p.db.QueryRow("INSERT INTO hivemapper.blocks (number, hash, timestamp) VALUES ($1, $2, $3) RETURNING id", clock.Number, clock.Id, clock.Timestamp.AsTime())
+	err = row.Err()
 	if err != nil {
 		return 0, fmt.Errorf("inserting clock: %w", err)
 	}
 
-	return result.LastInsertId()
+	err = row.Scan(&dbBlockID)
+	return
 }
 
 func (p *Psql) handleTransaction(dbBlockID int64, transactionHash string) (dbTransactionID int64, err error) {
@@ -68,13 +70,13 @@ func (p *Psql) handleTransaction(dbBlockID int64, transactionHash string) (dbTra
 		return
 	}
 
+	row := p.db.QueryRow("INSERT INTO hivemapper.transactions (hash, block_id) VALUES ($1, $2) RETURNING id", transactionHash, dbBlockID)
+	err = row.Err()
 	if err != nil {
-		result, err := p.db.Exec("INSERT INTO hivemapper.transactions (hash, block_id) VALUES ($1, $2)", transactionHash, dbBlockID)
-		if err != nil {
-			return 0, fmt.Errorf("inserting transaction: %w", err)
-		}
-		return result.LastInsertId()
+		return 0, fmt.Errorf("inserting transaction: %w", err)
 	}
+
+	err = row.Scan(&dbTransactionID)
 	return
 }
 
@@ -115,13 +117,13 @@ func (p *Psql) handleDriver(dbTransactionID int64, driverAddress string) (dbDriv
 		return
 	}
 
+	row := p.db.QueryRow("INSERT INTO hivemapper.drivers (address, transaction_id) VALUES ($1, $2) RETURNING id", driverAddress, dbTransactionID)
+	err = row.Err()
 	if err != nil {
-		result, err := p.db.Exec("INSERT INTO hivemapper.drivers (address, transaction_id) VALUES ($1, $2)", driverAddress, dbTransactionID)
-		if err != nil {
-			return 0, fmt.Errorf("inserting driver: %w", err)
-		}
-		return result.LastInsertId()
+		return 0, fmt.Errorf("inserting driver: %w", err)
 	}
+
+	err = row.Scan(&dbDriverID)
 	return
 }
 
@@ -132,13 +134,13 @@ func (p *Psql) handleFleet(dbTransactionID int64, fleetAddress string) (dbDriver
 		return
 	}
 
+	row := p.db.QueryRow("INSERT INTO hivemapper.fleets (address, transaction_id) VALUES ($1, $2) RETURNING id", fleetAddress, dbTransactionID)
+	err = row.Err()
 	if err != nil {
-		result, err := p.db.Exec("INSERT INTO hivemapper.fleets (address, transaction_id) VALUES ($1, $2)", fleetAddress, dbTransactionID)
-		if err != nil {
-			return 0, fmt.Errorf("inserting driver: %w", err)
-		}
-		return result.LastInsertId()
+		return 0, fmt.Errorf("inserting driver: %w", err)
 	}
+
+	err = row.Scan(&dbDriverID)
 	return
 }
 
@@ -149,14 +151,15 @@ func (p *Psql) handleFleetDriver(dbTransactionID int64, dbFleetID int64, dbDrive
 		return
 	}
 
+	row := p.db.QueryRow("INSERT INTO hivemapper.fleet_drivers (transaction_id, fleet_id, driver_id) VALUES ($1, $2, $3) RETURNING id", dbTransactionID, dbFleetID, dbDriverID)
+	err = row.Err()
 	if err != nil {
-		result, err := p.db.Exec("INSERT INTO hivemapper.fleet_drivers (transaction_id, fleet_id, driver_id) VALUES ($1, $2, $3)", dbTransactionID, dbFleetID, dbDriverID)
-		if err != nil {
-			return 0, fmt.Errorf("inserting driver: %w", err)
-		}
-		return result.LastInsertId()
+		return 0, fmt.Errorf("inserting driver: %w", err)
 	}
+
+	err = row.Scan(&dbDriverID)
 	return
+
 }
 
 func (p *Psql) HandlePayments(dbBlockID int64, payments []*pb.Payment) error {
@@ -258,11 +261,14 @@ func (p *Psql) HandleTransfers(dbBlockID int64, transfers []*pb.Transfer) error 
 }
 
 func (p *Psql) insertMint(dbTransactionID int64, mint *pb.Mint) (dbMintID int64, err error) {
-	result, err := p.db.Exec("INSERT INTO hivemapper.mints (transaction_id, to_address, amount) VALUES ($1, $2, $3)", dbTransactionID, mint.To, mint.Amount)
+	row := p.db.QueryRow("INSERT INTO hivemapper.mints (transaction_id, to_address, amount) VALUES ($1, $2, $3) RETURNING id", dbTransactionID, mint.To, mint.Amount)
+	err = row.Err()
 	if err != nil {
 		return 0, fmt.Errorf("inserting mint: %w", err)
 	}
-	return result.LastInsertId()
+
+	err = row.Scan(&dbMintID)
+	return
 }
 
 func (p *Psql) HandleMints(dbBlockID int64, mints []*pb.Mint) error {
@@ -281,11 +287,14 @@ func (p *Psql) HandleMints(dbBlockID int64, mints []*pb.Mint) error {
 }
 
 func (p *Psql) insertBurns(dbTransactionID int64, burn *pb.Burn) (dbMintID int64, err error) {
-	result, err := p.db.Exec("INSERT INTO hivemapper.burns (transaction_id, from_address, amount) VALUES ($1, $2, $3)", dbTransactionID, burn.From, burn.Amount)
+	row := p.db.QueryRow("INSERT INTO hivemapper.burns (transaction_id, from_address, amount) VALUES ($1, $2, $3) RETURNING id", dbTransactionID, burn.From, burn.Amount)
+	err = row.Err()
 	if err != nil {
 		return 0, fmt.Errorf("inserting burn: %w", err)
 	}
-	return result.LastInsertId()
+
+	err = row.Scan(&dbMintID)
+	return
 }
 
 func (p *Psql) HandleBurns(dbBlockID int64, burns []*pb.Burn) error {
