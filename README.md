@@ -1,4 +1,4 @@
-# Honey Tracker
+# Honey Tracker - StreamingFast Substream
 
 ### Build command
 ```bash
