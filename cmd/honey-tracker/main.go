@@ -3,9 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
+
 	"github.com/spf13/cobra"
 	"github.com/streamingfast/cli/sflags"
-	"os"
 
 	"go.uber.org/zap"
 
@@ -90,11 +91,12 @@ func rootRun(cmd *cobra.Command, args []string) error {
 	sinker.OnTerminating(func(err error) {
 		logger.Error("sinker terminating", zap.Error(err))
 	})
-	sinker.Run(ctx)
-
+	err = sinker.Run(ctx)
+	if err != nil {
+		return fmt.Errorf("runnning sinker:%w", err)
+	}
 	return nil
 }
-
 func main() {
 	if err := RootCmd.Execute(); err != nil {
 		panic(err)

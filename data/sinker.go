@@ -24,11 +24,16 @@ func NewSinker(logger *zap.Logger, sink *sink.Sinker, db DB) *Sinker {
 	}
 }
 
-func (s *Sinker) Run(ctx context.Context) {
+func (s *Sinker) Run(ctx context.Context) error {
 	//todo: get cursor
 	//var cursor *sink.Cursor
 
-	s.Sinker.Run(ctx, nil, s)
+	cursor, err := s.db.FetchCursor()
+	if err != nil {
+		return fmt.Errorf("fetch cursor: %w", err)
+	}
+	s.Sinker.Run(ctx, cursor, s)
+	return nil
 }
 
 func (s *Sinker) HandleBlockScopedData(ctx context.Context, data *pbsubstreamsrpc.BlockScopedData, isLive *bool, cursor *sink.Cursor) error {
@@ -75,7 +80,10 @@ func (s *Sinker) HandleBlockScopedData(ctx context.Context, data *pbsubstreamsrp
 		return fmt.Errorf("handle burns: %w", err)
 	}
 
-	//todo: save cursor
+	err = s.db.StoreCursor(cursor)
+	if err != nil {
+		return fmt.Errorf("store cursor: %w", err)
+	}
 	//todo: commit transaction
 	return nil
 }

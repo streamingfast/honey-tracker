@@ -1,6 +1,11 @@
 package data
 
 const dbCreateTables = `
+CREATE TABLE IF NOT EXISTS hivemapper.cursor (
+	name TEXT PRIMARY KEY,
+	cursor TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS hivemapper.blocks (
 	id SERIAL PRIMARY KEY,
 	number INTEGER NOT NULL,

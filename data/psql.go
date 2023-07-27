@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 
+	sink "github.com/streamingfast/substreams-sink"
+
 	_ "github.com/lib/pq"
 	pb "github.com/streamingfast/honey-tracker/data/pb/hivemapper/v1"
 	pbsubstreams "github.com/streamingfast/substreams/pb/sf/substreams/v1"
@@ -330,4 +332,26 @@ func (p *Psql) HandleAiPayments(dbBlockID int64, payments []*pb.AiTrainerPayment
 	}
 
 	return nil
+}
+
+func (p *Psql) StoreCursor(cursor *sink.Cursor) error {
+	_, err := p.db.Exec("INSERT INTO hivemapper.cursor (name, cursor) VALUES ($1, $2) ON CONFLICT (name) DO UPDATE SET cursor = $2", "hivemapper", cursor.String())
+	if err != nil {
+		return fmt.Errorf("inserting cursor: %w", err)
+	}
+	return nil
+}
+
+func (p *Psql) FetchCursor() (*sink.Cursor, error) {
+	rows, err := p.db.Query("SELECT cursor FROM hivemapper.cursor WHERE name = $1", "hivemapper")
+	if err != nil {
+		return nil, fmt.Errorf("selecting cursor: %w", err)
+	}
+	if rows.Next() {
+		var cursor string
+		err = rows.Scan(&cursor)
+
+		return sink.NewCursor(cursor)
+	}
+	return nil, nil
 }

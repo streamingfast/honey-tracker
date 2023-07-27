@@ -2,6 +2,7 @@ package data
 
 import (
 	pb "github.com/streamingfast/honey-tracker/data/pb/hivemapper/v1"
+	sink "github.com/streamingfast/substreams-sink"
 	pbsubstreams "github.com/streamingfast/substreams/pb/sf/substreams/v1"
 )
 
@@ -17,4 +18,6 @@ type DB interface {
 	HandleTransfers(dbBlockID int64, transfers []*pb.Transfer) error
 	HandleMints(dbBlockID int64, mints []*pb.Mint) error
 	HandleBurns(dbBlockID int64, burns []*pb.Burn) error
+	StoreCursor(cursor *sink.Cursor) error
+	FetchCursor() (*sink.Cursor, error)
 }

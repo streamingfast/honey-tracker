@@ -2,7 +2,7 @@ module github.com/streamingfast/honey-tracker
 
 go 1.20
 
-replace github.com/streamingfast/substreams-sink => ../substreams-sink
+//replace github.com/streamingfast/substreams-sink => ../substreams-sink
 
 require (
 	github.com/lib/pq v1.10.9
