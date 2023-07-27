@@ -1,4 +1,4 @@
-# honey-tracker
+# Honey Tracker
 
 ### Build command
 ```bash
