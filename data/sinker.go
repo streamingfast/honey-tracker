@@ -3,6 +3,7 @@ package data
 import (
 	"context"
 	"fmt"
+
 	pb "github.com/streamingfast/honey-tracker/data/pb/hivemapper/v1"
 	sink "github.com/streamingfast/substreams-sink"
 	pbsubstreamsrpc "github.com/streamingfast/substreams/pb/sf/substreams/rpc/v2"
@@ -46,7 +47,7 @@ func (s *Sinker) HandleBlockScopedData(ctx context.Context, data *pbsubstreamsrp
 		if data.Clock.Number%100 == 0 {
 			s.logger.Info("progress_block", zap.Uint64("block", data.Clock.Number))
 		}
-		return nil
+		return s.db.StoreCursor(cursor)
 	}
 
 	moduleOutput := &pb.Output{}
