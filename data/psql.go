@@ -205,17 +205,17 @@ func (p *Psql) HandleSplitPayments(dbBlockID int64, splitPayments []*pb.TokenSpl
 
 		driverAddress, err := p.resolveAddress(payment.DriverMint.To)
 		if err != nil {
-			return fmt.Errorf("resolving address: %w", err)
+			return fmt.Errorf("resolving driver address: %w", err)
 		}
 
 		fleetAddress, err := p.resolveAddress(payment.ManagerMint.To)
 		if err != nil {
-			return fmt.Errorf("resolving address: %w", err)
+			return fmt.Errorf("resolving fleet address: %w", err)
 		}
 
 		fleetID, err := p.handleFleet(dbTransactionID, fleetAddress)
 		if err != nil {
-			return fmt.Errorf("handling driver: %w", err)
+			return fmt.Errorf("handling fleet id: %w", err)
 		}
 
 		driverID, err := p.handleDriver(dbTransactionID, driverAddress)

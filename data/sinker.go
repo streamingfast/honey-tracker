@@ -61,6 +61,11 @@ func (s *Sinker) HandleBlockScopedData(ctx context.Context, data *pbsubstreamsrp
 		return fmt.Errorf("handle block clock: %w", err)
 	}
 
+	err = s.db.HandleInitializedAccount(dbBlockID, moduleOutput.InitializedAccount)
+	if err != nil {
+		return fmt.Errorf("handle initialized accounts: %w", err)
+	}
+
 	if err := s.db.HandlePayments(dbBlockID, moduleOutput.Payments); err != nil {
 		return fmt.Errorf("handle payments: %w", err)
 	}
@@ -90,5 +95,5 @@ func (s *Sinker) HandleBlockScopedData(ctx context.Context, data *pbsubstreamsrp
 }
 
 func (s *Sinker) HandleBlockUndoSignal(ctx context.Context, undoSignal *pbsubstreamsrpc.BlockUndoSignal, cursor *sink.Cursor) error {
-	panic("should not called on solana")
+	panic("should not be called on solana")
 }
