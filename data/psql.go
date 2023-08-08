@@ -88,9 +88,9 @@ func (p *Psql) HandleInitializedAccount(dbBlockID int64, initializedAccounts []*
 		if err != nil {
 			return fmt.Errorf("handling transaction: %w", err)
 		}
-		_, err = p.db.Exec("INSERT INTO hivemapper.deriveAddresses (transaction_id, address, deriveAddress) VALUES ($1, $2, $3)", dbTransactionID, initializedAccount.Owner, initializedAccount.Account)
+		_, err = p.db.Exec("INSERT INTO hivemapper.derived_addresses (transaction_id, address, derivedAddress) VALUES ($1, $2, $3)", dbTransactionID, initializedAccount.Owner, initializedAccount.Account)
 		if err != nil {
-			return fmt.Errorf("inserting deriveAddresses: %w", err)
+			return fmt.Errorf("inserting derived_addresses: %w", err)
 		}
 	}
 	return nil
@@ -102,7 +102,7 @@ func (p *Psql) resolveAddress(derivedAddress string) (string, error) {
 	resolvedAddress := ""
 	rows, err := p.db.Query("SELECT address FROM hivemapper.derived_addresses WHERE derivedAddress = $1", derivedAddress)
 	if err != nil {
-		return "", fmt.Errorf("selecting derivedAddresses: %w", err)
+		return "", fmt.Errorf("selecting derived_addresses: %w", err)
 	}
 	if rows.Next() {
 		err = rows.Scan(&resolvedAddress)
@@ -175,6 +175,12 @@ func (p *Psql) HandlePayments(dbBlockID int64, payments []*pb.Payment) error {
 		if err != nil {
 			return fmt.Errorf("inserting mint: %w", err)
 		}
+
+		_, err = p.db.Exec("INSERT INTO hivemapper.payments (mint_id) VALUES ($1) RETURNING id", payment.Mint.TrxHash)
+		if err != nil {
+			return fmt.Errorf("inserting payment: %w", err)
+		}
+		return nil
 	}
 	return nil
 }
