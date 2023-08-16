@@ -11,7 +11,7 @@ type DB interface {
 
 	HandleClock(clock *pbsubstreams.Clock) (dbBlockID int64, err error)
 	HandleInitializedAccount(dbBlockID int64, initializedAccount []*pb.InitializedAccount) error
-	HandlePayments(dbBlockID int64, payments []*pb.Payment) error
+	HandlePayments(dbBlockID int64, payments []*pb.RegularDriverPayment) error
 	HandleAiPayments(dbBlockID int64, payments []*pb.AiTrainerPayment) error
 	HandleSplitPayments(dbBlockID int64, splitPayments []*pb.TokenSplittingPayment) error
 	HandleNoneSplitPayments(dbBlockID int64, payments []*pb.NoSplitPayment) error

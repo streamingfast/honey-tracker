@@ -164,7 +164,7 @@ func (p *Psql) handleFleetDriver(dbTransactionID int64, dbFleetID int64, dbDrive
 
 }
 
-func (p *Psql) HandlePayments(dbBlockID int64, payments []*pb.Payment) error {
+func (p *Psql) HandlePayments(dbBlockID int64, payments []*pb.RegularDriverPayment) error {
 	for _, payment := range payments {
 		dbTransactionID, err := p.handleTransaction(dbBlockID, payment.Mint.TrxHash)
 		if err != nil {
