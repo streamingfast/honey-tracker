@@ -43,7 +43,7 @@ func NewPostgreSQL(psqlInfo *PsqlInfo) *Psql {
 }
 
 func (p *Psql) Init() error {
-	_, err := p.tx.Exec(dbCreateTables)
+	_, err := p.db.Exec(dbCreateTables)
 	if err != nil {
 		return fmt.Errorf("creating fleets table: %w", err)
 	}
