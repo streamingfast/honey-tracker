@@ -355,7 +355,7 @@ func (p *Psql) StoreCursor(cursor *sink.Cursor) error {
 }
 
 func (p *Psql) FetchCursor() (*sink.Cursor, error) {
-	rows, err := p.tx.Query("SELECT cursor FROM hivemapper.cursor WHERE name = $1", "hivemapper")
+	rows, err := p.db.Query("SELECT cursor FROM hivemapper.cursor WHERE name = $1", "hivemapper")
 	if err != nil {
 		return nil, fmt.Errorf("selecting cursor: %w", err)
 	}
