@@ -9,6 +9,10 @@ import (
 type DB interface {
 	Init() error
 
+	BeginTransaction() error
+	CommitTransaction() error
+	RollbackTransaction() error
+
 	HandleClock(clock *pbsubstreams.Clock) (dbBlockID int64, err error)
 	HandleInitializedAccount(dbBlockID int64, initializedAccount []*pb.InitializedAccount) error
 	HandleRegularDriverPayments(dbBlockID int64, payments []*pb.RegularDriverPayment) error

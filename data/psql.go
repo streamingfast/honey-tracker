@@ -5,15 +5,15 @@ import (
 	"errors"
 	"fmt"
 
-	sink "github.com/streamingfast/substreams-sink"
-
 	_ "github.com/lib/pq"
 	pb "github.com/streamingfast/honey-tracker/data/pb/hivemapper/v1"
+	sink "github.com/streamingfast/substreams-sink"
 	pbsubstreams "github.com/streamingfast/substreams/pb/sf/substreams/v1"
 )
 
 type Psql struct {
 	db *sql.DB
+	tx *sql.Tx
 }
 
 type PsqlInfo struct {
@@ -43,7 +43,7 @@ func NewPostgreSQL(psqlInfo *PsqlInfo) *Psql {
 }
 
 func (p *Psql) Init() error {
-	_, err := p.db.Exec(dbCreateTables)
+	_, err := p.tx.Exec(dbCreateTables)
 	if err != nil {
 		return fmt.Errorf("creating fleets table: %w", err)
 	}
@@ -51,7 +51,7 @@ func (p *Psql) Init() error {
 	return nil
 }
 func (p *Psql) HandleClock(clock *pbsubstreams.Clock) (dbBlockID int64, err error) {
-	row := p.db.QueryRow("INSERT INTO hivemapper.blocks (number, hash, timestamp) VALUES ($1, $2, $3) RETURNING id", clock.Number, clock.Id, clock.Timestamp.AsTime())
+	row := p.tx.QueryRow("INSERT INTO hivemapper.blocks (number, hash, timestamp) VALUES ($1, $2, $3) RETURNING id", clock.Number, clock.Id, clock.Timestamp.AsTime())
 	err = row.Err()
 	if err != nil {
 		return 0, fmt.Errorf("inserting clock: %w", err)
@@ -63,7 +63,7 @@ func (p *Psql) HandleClock(clock *pbsubstreams.Clock) (dbBlockID int64, err erro
 
 func (p *Psql) handleTransaction(dbBlockID int64, transactionHash string) (dbTransactionID int64, err error) {
 	//todo: create a transaction cache
-	rows, err := p.db.Query("SELECT id FROM hivemapper.transactions WHERE hash = $1", transactionHash)
+	rows, err := p.tx.Query("SELECT id FROM hivemapper.transactions WHERE hash = $1", transactionHash)
 	if err != nil {
 		return 0, fmt.Errorf("selecting transaction: %w", err)
 	}
@@ -72,7 +72,7 @@ func (p *Psql) handleTransaction(dbBlockID int64, transactionHash string) (dbTra
 		return
 	}
 
-	row := p.db.QueryRow("INSERT INTO hivemapper.transactions (hash, block_id) VALUES ($1, $2) RETURNING id", transactionHash, dbBlockID)
+	row := p.tx.QueryRow("INSERT INTO hivemapper.transactions (hash, block_id) VALUES ($1, $2) RETURNING id", transactionHash, dbBlockID)
 	err = row.Err()
 	if err != nil {
 		return 0, fmt.Errorf("inserting transaction: %w", err)
@@ -88,7 +88,7 @@ func (p *Psql) HandleInitializedAccount(dbBlockID int64, initializedAccounts []*
 		if err != nil {
 			return fmt.Errorf("handling transaction: %w", err)
 		}
-		_, err = p.db.Exec("INSERT INTO hivemapper.derived_addresses (transaction_id, address, derivedAddress) VALUES ($1, $2, $3)", dbTransactionID, initializedAccount.Owner, initializedAccount.Account)
+		_, err = p.tx.Exec("INSERT INTO hivemapper.derived_addresses (transaction_id, address, derivedAddress) VALUES ($1, $2, $3)", dbTransactionID, initializedAccount.Owner, initializedAccount.Account)
 		if err != nil {
 			return fmt.Errorf("inserting derived_addresses: %w", err)
 		}
@@ -100,7 +100,7 @@ var NotFound = errors.New("Not found")
 
 func (p *Psql) resolveAddress(derivedAddress string) (string, error) {
 	resolvedAddress := ""
-	rows, err := p.db.Query("SELECT address FROM hivemapper.derived_addresses WHERE derivedAddress = $1", derivedAddress)
+	rows, err := p.tx.Query("SELECT address FROM hivemapper.derived_addresses WHERE derivedAddress = $1", derivedAddress)
 	if err != nil {
 		return "", fmt.Errorf("selecting derived_addresses: %w", err)
 	}
@@ -113,13 +113,13 @@ func (p *Psql) resolveAddress(derivedAddress string) (string, error) {
 }
 
 func (p *Psql) handleDriver(dbTransactionID int64, driverAddress string) (dbDriverID int64, err error) {
-	rows, err := p.db.Query("SELECT id FROM hivemapper.drivers WHERE address = $1", driverAddress)
+	rows, err := p.tx.Query("SELECT id FROM hivemapper.drivers WHERE address = $1", driverAddress)
 	if rows.Next() {
 		err = rows.Scan(&dbDriverID)
 		return
 	}
 
-	row := p.db.QueryRow("INSERT INTO hivemapper.drivers (address, transaction_id) VALUES ($1, $2) RETURNING id", driverAddress, dbTransactionID)
+	row := p.tx.QueryRow("INSERT INTO hivemapper.drivers (address, transaction_id) VALUES ($1, $2) RETURNING id", driverAddress, dbTransactionID)
 	err = row.Err()
 	if err != nil {
 		return 0, fmt.Errorf("inserting driver: %w", err)
@@ -130,13 +130,13 @@ func (p *Psql) handleDriver(dbTransactionID int64, driverAddress string) (dbDriv
 }
 
 func (p *Psql) handleFleet(dbTransactionID int64, fleetAddress string) (dbDriverID int64, err error) {
-	rows, err := p.db.Query("SELECT id FROM hivemapper.fleets WHERE address = $1", fleetAddress)
+	rows, err := p.tx.Query("SELECT id FROM hivemapper.fleets WHERE address = $1", fleetAddress)
 	if rows.Next() {
 		err = rows.Scan(&dbDriverID)
 		return
 	}
 
-	row := p.db.QueryRow("INSERT INTO hivemapper.fleets (address, transaction_id) VALUES ($1, $2) RETURNING id", fleetAddress, dbTransactionID)
+	row := p.tx.QueryRow("INSERT INTO hivemapper.fleets (address, transaction_id) VALUES ($1, $2) RETURNING id", fleetAddress, dbTransactionID)
 	err = row.Err()
 	if err != nil {
 		return 0, fmt.Errorf("inserting driver: %w", err)
@@ -147,13 +147,13 @@ func (p *Psql) handleFleet(dbTransactionID int64, fleetAddress string) (dbDriver
 }
 
 func (p *Psql) handleFleetDriver(dbTransactionID int64, dbFleetID int64, dbDriverID int64) (dbFleetDriverID int64, err error) {
-	rows, err := p.db.Query("SELECT id FROM hivemapper.fleet_drivers WHERE fleet_id = $1 and driver_id = $2", dbFleetID, dbDriverID)
+	rows, err := p.tx.Query("SELECT id FROM hivemapper.fleet_drivers WHERE fleet_id = $1 and driver_id = $2", dbFleetID, dbDriverID)
 	if rows.Next() {
 		err = rows.Scan(&dbDriverID)
 		return
 	}
 
-	row := p.db.QueryRow("INSERT INTO hivemapper.fleet_drivers (transaction_id, fleet_id, driver_id) VALUES ($1, $2, $3) RETURNING id", dbTransactionID, dbFleetID, dbDriverID)
+	row := p.tx.QueryRow("INSERT INTO hivemapper.fleet_drivers (transaction_id, fleet_id, driver_id) VALUES ($1, $2, $3) RETURNING id", dbTransactionID, dbFleetID, dbDriverID)
 	err = row.Err()
 	if err != nil {
 		return 0, fmt.Errorf("inserting driver: %w", err)
@@ -176,7 +176,7 @@ func (p *Psql) HandleRegularDriverPayments(dbBlockID int64, payments []*pb.Regul
 			return fmt.Errorf("inserting mint: %w", err)
 		}
 
-		_, err = p.db.Exec("INSERT INTO hivemapper.payments (mint_id) VALUES ($1) RETURNING id", mintDbID)
+		_, err = p.tx.Exec("INSERT INTO hivemapper.payments (mint_id) VALUES ($1) RETURNING id", mintDbID)
 		if err != nil {
 			return fmt.Errorf("inserting payment: %w", err)
 		}
@@ -250,7 +250,7 @@ func (p *Psql) HandleSplitPayments(dbBlockID int64, splitPayments []*pb.TokenSpl
 			return fmt.Errorf("inserting driver mint: %w", err)
 		}
 
-		_, err = p.db.Exec("INSERT INTO hivemapper.split_payments (driver_id, fleet_id, transaction_id, fleet_mint_id, driver_mint_id) VALUES ($1, $2, $3, $4, $5)", driverID, fleetID, dbTransactionID, fleetMintID, driverMintID)
+		_, err = p.tx.Exec("INSERT INTO hivemapper.split_payments (driver_id, fleet_id, transaction_id, fleet_mint_id, driver_mint_id) VALUES ($1, $2, $3, $4, $5)", driverID, fleetID, dbTransactionID, fleetMintID, driverMintID)
 		if err != nil {
 			return fmt.Errorf("inserting split payment: %w", err)
 		}
@@ -266,7 +266,7 @@ func (p *Psql) HandleTransfers(dbBlockID int64, transfers []*pb.Transfer) error 
 			return fmt.Errorf("inserting transaction: %w", err)
 		}
 
-		_, err = p.db.Exec("INSERT INTO hivemapper.transfers (transaction_id, from_address, to_address, amount) VALUES ($1, $2, $3, $4)", dbTransactionID, transfer.From, transfer.To, transfer.Amount)
+		_, err = p.tx.Exec("INSERT INTO hivemapper.transfers (transaction_id, from_address, to_address, amount) VALUES ($1, $2, $3, $4)", dbTransactionID, transfer.From, transfer.To, transfer.Amount)
 		if err != nil {
 			return fmt.Errorf("inserting transfer: %w", err)
 		}
@@ -275,7 +275,7 @@ func (p *Psql) HandleTransfers(dbBlockID int64, transfers []*pb.Transfer) error 
 }
 
 func (p *Psql) insertMint(dbTransactionID int64, mint *pb.Mint) (dbMintID int64, err error) {
-	row := p.db.QueryRow("INSERT INTO hivemapper.mints (transaction_id, to_address, amount) VALUES ($1, $2, $3) RETURNING id", dbTransactionID, mint.To, mint.Amount)
+	row := p.tx.QueryRow("INSERT INTO hivemapper.mints (transaction_id, to_address, amount) VALUES ($1, $2, $3) RETURNING id", dbTransactionID, mint.To, mint.Amount)
 	err = row.Err()
 	if err != nil {
 		return 0, fmt.Errorf("inserting mint: %w", err)
@@ -301,7 +301,7 @@ func (p *Psql) HandleMints(dbBlockID int64, mints []*pb.Mint) error {
 }
 
 func (p *Psql) insertBurns(dbTransactionID int64, burn *pb.Burn) (dbMintID int64, err error) {
-	row := p.db.QueryRow("INSERT INTO hivemapper.burns (transaction_id, from_address, amount) VALUES ($1, $2, $3) RETURNING id", dbTransactionID, burn.From, burn.Amount)
+	row := p.tx.QueryRow("INSERT INTO hivemapper.burns (transaction_id, from_address, amount) VALUES ($1, $2, $3) RETURNING id", dbTransactionID, burn.From, burn.Amount)
 	err = row.Err()
 	if err != nil {
 		return 0, fmt.Errorf("inserting burn: %w", err)
@@ -337,7 +337,7 @@ func (p *Psql) HandleAiPayments(dbBlockID int64, payments []*pb.AiTrainerPayment
 		if err != nil {
 			return fmt.Errorf("inserting mint: %w", err)
 		}
-		_, err = p.db.Exec("INSERT INTO hivemapper.ai_payments (transaction_id, mint_id) VALUES ($1, $2)", dbTransactionID, dbMintID)
+		_, err = p.tx.Exec("INSERT INTO hivemapper.ai_payments (transaction_id, mint_id) VALUES ($1, $2)", dbTransactionID, dbMintID)
 		if err != nil {
 			return fmt.Errorf("inserting ai payment: %w", err)
 		}
@@ -347,7 +347,7 @@ func (p *Psql) HandleAiPayments(dbBlockID int64, payments []*pb.AiTrainerPayment
 }
 
 func (p *Psql) StoreCursor(cursor *sink.Cursor) error {
-	_, err := p.db.Exec("INSERT INTO hivemapper.cursor (name, cursor) VALUES ($1, $2) ON CONFLICT (name) DO UPDATE SET cursor = $2", "hivemapper", cursor.String())
+	_, err := p.tx.Exec("INSERT INTO hivemapper.cursor (name, cursor) VALUES ($1, $2) ON CONFLICT (name) DO UPDATE SET cursor = $2", "hivemapper", cursor.String())
 	if err != nil {
 		return fmt.Errorf("inserting cursor: %w", err)
 	}
@@ -355,7 +355,7 @@ func (p *Psql) StoreCursor(cursor *sink.Cursor) error {
 }
 
 func (p *Psql) FetchCursor() (*sink.Cursor, error) {
-	rows, err := p.db.Query("SELECT cursor FROM hivemapper.cursor WHERE name = $1", "hivemapper")
+	rows, err := p.tx.Query("SELECT cursor FROM hivemapper.cursor WHERE name = $1", "hivemapper")
 	if err != nil {
 		return nil, fmt.Errorf("selecting cursor: %w", err)
 	}
@@ -366,4 +366,33 @@ func (p *Psql) FetchCursor() (*sink.Cursor, error) {
 		return sink.NewCursor(cursor)
 	}
 	return nil, nil
+}
+
+func (p *Psql) BeginTransaction() error {
+	tx, err := p.db.Begin()
+	if err != nil {
+		return fmt.Errorf("beginning transaction: %w", err)
+	}
+	p.tx = tx
+	return nil
+}
+
+func (p *Psql) CommitTransaction() error {
+	err := p.tx.Commit()
+	if err != nil {
+		return fmt.Errorf("committing transaction: %w", err)
+	}
+
+	p.tx = nil
+	return nil
+}
+
+func (p *Psql) RollbackTransaction() error {
+	err := p.tx.Rollback()
+	if err != nil {
+		return fmt.Errorf("rolling back transaction: %w", err)
+	}
+
+	p.tx = nil
+	return nil
 }

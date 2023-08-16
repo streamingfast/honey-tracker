@@ -37,7 +37,22 @@ func (s *Sinker) Run(ctx context.Context) error {
 	return nil
 }
 
-func (s *Sinker) HandleBlockScopedData(ctx context.Context, data *pbsubstreamsrpc.BlockScopedData, isLive *bool, cursor *sink.Cursor) error {
+func (s *Sinker) HandleBlockScopedData(ctx context.Context, data *pbsubstreamsrpc.BlockScopedData, isLive *bool, cursor *sink.Cursor) (err error) {
+
+	defer func() {
+		if err != nil {
+			e := s.db.RollbackTransaction()
+			err = fmt.Errorf("rollback transaction: %w: while handling err %w", e, err)
+			return
+		}
+		err = s.db.CommitTransaction()
+	}()
+
+	err = s.db.BeginTransaction()
+	if err != nil {
+		return fmt.Errorf("begin transaction: %w", err)
+	}
+
 	output := data.Output
 	if output.Name != s.OutputModuleName() {
 		return fmt.Errorf("received data from wrong output module, expected to received from %q but got module's output for %q", s.OutputModuleName(), output.Name)
@@ -51,7 +66,7 @@ func (s *Sinker) HandleBlockScopedData(ctx context.Context, data *pbsubstreamsrp
 	}
 
 	moduleOutput := &pb.Output{}
-	err := proto.Unmarshal(output.GetMapOutput().GetValue(), moduleOutput)
+	err = proto.Unmarshal(output.GetMapOutput().GetValue(), moduleOutput)
 	if err != nil {
 		return fmt.Errorf("unmarshal module output changes: %w", err)
 	}
@@ -90,7 +105,6 @@ func (s *Sinker) HandleBlockScopedData(ctx context.Context, data *pbsubstreamsrp
 	if err != nil {
 		return fmt.Errorf("store cursor: %w", err)
 	}
-	//todo: commit transaction
 	return nil
 }
 
