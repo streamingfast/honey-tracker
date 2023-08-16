@@ -260,7 +260,7 @@ func (p *Psql) HandleTransfers(dbBlockID int64, transfers []*pb.Transfer) error 
 			return fmt.Errorf("inserting transaction: %w", err)
 		}
 
-		_, err = p.db.Exec("INSERT INTO hivemapper.transfers (transaction_id, from_address, to_address, amount) VALUES ($1, $2, $3, $4, $5, $6)", dbTransactionID, transfer.From, transfer.To, transfer.Amount)
+		_, err = p.db.Exec("INSERT INTO hivemapper.transfers (transaction_id, from_address, to_address, amount) VALUES ($1, $2, $3, $4)", dbTransactionID, transfer.From, transfer.To, transfer.Amount)
 		if err != nil {
 			return fmt.Errorf("inserting transfer: %w", err)
 		}
