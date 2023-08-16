@@ -66,7 +66,7 @@ func (s *Sinker) HandleBlockScopedData(ctx context.Context, data *pbsubstreamsrp
 		return fmt.Errorf("handle initialized accounts: %w", err)
 	}
 
-	if err := s.db.HandlePayments(dbBlockID, moduleOutput.RegularDriverPayments); err != nil {
+	if err := s.db.HandleRegularDriverPayments(dbBlockID, moduleOutput.RegularDriverPayments); err != nil {
 		return fmt.Errorf("handle payments: %w", err)
 	}
 

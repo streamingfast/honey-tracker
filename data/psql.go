@@ -164,19 +164,19 @@ func (p *Psql) handleFleetDriver(dbTransactionID int64, dbFleetID int64, dbDrive
 
 }
 
-func (p *Psql) HandlePayments(dbBlockID int64, payments []*pb.RegularDriverPayment) error {
+func (p *Psql) HandleRegularDriverPayments(dbBlockID int64, payments []*pb.RegularDriverPayment) error {
 	for _, payment := range payments {
 		dbTransactionID, err := p.handleTransaction(dbBlockID, payment.Mint.TrxHash)
 		if err != nil {
 			return fmt.Errorf("inserting transaction: %w", err)
 		}
 
-		_, err = p.insertMint(dbTransactionID, payment.Mint)
+		mintDbID, err := p.insertMint(dbTransactionID, payment.Mint)
 		if err != nil {
 			return fmt.Errorf("inserting mint: %w", err)
 		}
 
-		_, err = p.db.Exec("INSERT INTO hivemapper.payments (mint_id) VALUES ($1) RETURNING id", payment.Mint.TrxHash)
+		_, err = p.db.Exec("INSERT INTO hivemapper.payments (mint_id) VALUES ($1) RETURNING id", mintDbID)
 		if err != nil {
 			return fmt.Errorf("inserting payment: %w", err)
 		}
@@ -192,11 +192,17 @@ func (p *Psql) HandleNoneSplitPayments(dbBlockID int64, payments []*pb.NoSplitPa
 			return fmt.Errorf("inserting transaction: %w", err)
 		}
 
-		//todo: detect drive vs fleet from backend api
-		_, err = p.insertMint(dbTransactionID, payment.Mint)
+		mintDbID, err := p.insertMint(dbTransactionID, payment.Mint)
 		if err != nil {
 			return fmt.Errorf("inserting mint: %w", err)
 		}
+
+		//todo: detect drive vs fleet from backend api
+		_, err = p.db.Exec("INSERT INTO hivemapper.no_split_payments (mint_id) VALUES ($1) RETURNING id", mintDbID)
+		if err != nil {
+			return fmt.Errorf("inserting payment: %w", err)
+		}
+		return nil
 
 	}
 	return nil
