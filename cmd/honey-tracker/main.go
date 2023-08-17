@@ -86,6 +86,8 @@ func rootRun(cmd *cobra.Command, args []string) error {
 		zap.NewNop(),
 		tracer,
 		sink.WithBlockRange(br),
+		sink.WithAverageBlockSec("average received block second", 30),
+		sink.WithAverageBlockTimeProcessing("average block processing time", 1000),
 	)
 	checkError(err)
 

@@ -6,7 +6,6 @@ import (
 	"time"
 
 	pb "github.com/streamingfast/honey-tracker/data/pb/hivemapper/v1"
-	data "github.com/streamingfast/honey-tracker/utils"
 	sink "github.com/streamingfast/substreams-sink"
 	pbsubstreamsrpc "github.com/streamingfast/substreams/pb/sf/substreams/rpc/v2"
 	v1 "github.com/streamingfast/substreams/pb/sf/substreams/v1"
@@ -17,20 +16,16 @@ import (
 type Sinker struct {
 	logger *zap.Logger
 	*sink.Sinker
-	db                         DB
-	averageBlockTimeProcessing *data.AverageInt64
-	averageBlockSec            *data.AverageInt64
-	lastClock                  *v1.Clock
-	blockSecCount              int64
+	db            DB
+	lastClock     *v1.Clock
+	blockSecCount int64
 }
 
 func NewSinker(logger *zap.Logger, sink *sink.Sinker, db DB) *Sinker {
 	return &Sinker{
-		logger:                     logger,
-		Sinker:                     sink,
-		db:                         db,
-		averageBlockTimeProcessing: data.NewAverageInt64WithCount("average block processing time", 1000),
-		averageBlockSec:            data.NewAverageInt64WithCount("average received block second", 30),
+		logger: logger,
+		Sinker: sink,
+		db:     db,
 	}
 }
 
@@ -41,7 +36,7 @@ func (s *Sinker) Run(ctx context.Context) error {
 	go func() {
 		for {
 			time.Sleep(1 * time.Second)
-			s.averageBlockSec.Add(s.blockSecCount)
+			s.Sinker.AverageBlockSec().Add(s.blockSecCount)
 			s.blockSecCount = 0
 		}
 	}()
@@ -52,8 +47,8 @@ func (s *Sinker) Run(ctx context.Context) error {
 			if s.lastClock != nil {
 				s.logger.Info("progress_block", zap.Stringer("block", s.lastClock))
 			}
-			s.logger.Info(s.averageBlockSec.String())
-			s.logger.Info(s.averageBlockTimeProcessing.String() + "ms")
+			s.logger.Info(s.Sinker.AverageBlockSec().String())
+			s.logger.Info(s.Sinker.AverageBlockTimeProcessing().String() + "ms")
 		}
 	}()
 
@@ -69,21 +64,21 @@ func (s *Sinker) HandleBlockScopedData(ctx context.Context, data *pbsubstreamsrp
 	startTime := time.Now()
 	s.blockSecCount++
 	s.lastClock = data.Clock
+	hasTransaction := false
 
 	defer func() {
-		s.averageBlockTimeProcessing.Add(time.Since(startTime).Milliseconds())
+		s.Sinker.AverageBlockTimeProcessing().Add(time.Since(startTime).Milliseconds())
 		if err != nil {
-			e := s.db.RollbackTransaction()
-			err = fmt.Errorf("block: %d rollback transaction: %w: while handling err %w", data.Clock.Number, e, err)
+			if hasTransaction {
+				e := s.db.RollbackTransaction()
+				err = fmt.Errorf("block: %d rollback transaction: %w: while handling err %w", data.Clock.Number, e, err)
+			}
 			return
 		}
-		err = s.db.CommitTransaction()
+		if hasTransaction {
+			err = s.db.CommitTransaction()
+		}
 	}()
-
-	err = s.db.BeginTransaction()
-	if err != nil {
-		return fmt.Errorf("begin transaction: %w", err)
-	}
 
 	output := data.Output
 	if output.Name != s.OutputModuleName() {
@@ -93,6 +88,13 @@ func (s *Sinker) HandleBlockScopedData(ctx context.Context, data *pbsubstreamsrp
 	if len(output.GetMapOutput().GetValue()) == 0 {
 		return nil
 	}
+
+	err = s.db.BeginTransaction()
+	if err != nil {
+		return fmt.Errorf("begin transaction: %w", err)
+	}
+
+	hasTransaction = true
 
 	moduleOutput := &pb.Output{}
 	err = proto.Unmarshal(output.GetMapOutput().GetValue(), moduleOutput)

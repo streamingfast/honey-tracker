@@ -2,15 +2,13 @@ module github.com/streamingfast/honey-tracker
 
 go 1.20
 
-//replace github.com/streamingfast/substreams-sink => ../substreams-sink
-
 require (
 	github.com/lib/pq v1.10.9
 	github.com/spf13/cobra v1.6.1
 	github.com/streamingfast/cli v0.0.4-0.20230508203625-ecd532feb120
 	github.com/streamingfast/logging v0.0.0-20221209193439-bff11742bf4c
 	github.com/streamingfast/substreams v1.1.8-0.20230705171054-90758978ac9c
-	github.com/streamingfast/substreams-sink v0.2.7-0.20230719224959-1bfb0e880c43
+	github.com/streamingfast/substreams-sink v0.3.1-0.20230817185211-77f39db34541
 	go.uber.org/zap v1.24.0
 	google.golang.org/protobuf v1.30.0
 )
