@@ -265,9 +265,10 @@ func (p *Psql) HandleTransfers(dbBlockID int64, transfers []*pb.Transfer) error 
 		if err != nil {
 			return fmt.Errorf("inserting transaction: %w", err)
 		}
-
+		//{"error": "handle BlockScopedData message: rollback transaction: rolling back transaction: driver: bad connection: while handling err handle transfers: inserting transfer: pq: unexpected Parse response 'C'"}
 		_, err = p.tx.Exec("INSERT INTO hivemapper.transfers (transaction_id, from_address, to_address, amount) VALUES ($1, $2, $3, $4)", dbTransactionID, transfer.From, transfer.To, transfer.Amount)
 		if err != nil {
+			fmt.Println("processing transfer: ", transfer.From, transfer.To, transfer.Amount, transfer.TrxHash)
 			return fmt.Errorf("inserting transfer: %w", err)
 		}
 	}
