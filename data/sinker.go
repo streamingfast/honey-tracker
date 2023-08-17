@@ -21,6 +21,7 @@ type Sinker struct {
 	averageBlockTimeProcessing *data.AverageInt64
 	averageBlockSec            *data.AverageInt64
 	lastClock                  *v1.Clock
+	blockSecCount              int64
 }
 
 func NewSinker(logger *zap.Logger, sink *sink.Sinker, db DB) *Sinker {
@@ -29,13 +30,19 @@ func NewSinker(logger *zap.Logger, sink *sink.Sinker, db DB) *Sinker {
 		Sinker:                     sink,
 		db:                         db,
 		averageBlockTimeProcessing: data.NewAverageInt64WithCount("average block processing time", 1000),
-		averageBlockSec:            data.NewAverageInt64WithCount("average received block second", 1000),
+		averageBlockSec:            data.NewAverageInt64WithCount("average received block second", 30),
 	}
 }
 
 func (s *Sinker) Run(ctx context.Context) error {
 	//todo: get cursor
 	//var cursor *sink.Cursor
+
+	go func() {
+		time.Sleep(1 * time.Second)
+		s.averageBlockSec.Add(s.blockSecCount)
+		s.blockSecCount = 0
+	}()
 
 	go func() {
 		for {
