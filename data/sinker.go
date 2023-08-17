@@ -39,9 +39,11 @@ func (s *Sinker) Run(ctx context.Context) error {
 	//var cursor *sink.Cursor
 
 	go func() {
-		time.Sleep(1 * time.Second)
-		s.averageBlockSec.Add(s.blockSecCount)
-		s.blockSecCount = 0
+		for {
+			time.Sleep(1 * time.Second)
+			s.averageBlockSec.Add(s.blockSecCount)
+			s.blockSecCount = 0
+		}
 	}()
 
 	go func() {
@@ -51,7 +53,7 @@ func (s *Sinker) Run(ctx context.Context) error {
 				s.logger.Info("progress_block", zap.Stringer("block", s.lastClock))
 			}
 			s.logger.Info(s.averageBlockSec.String())
-			s.logger.Info(s.averageBlockTimeProcessing.String())
+			s.logger.Info(s.averageBlockTimeProcessing.String() + "ms")
 		}
 	}()
 
