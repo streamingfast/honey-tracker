@@ -83,7 +83,7 @@ func rootRun(cmd *cobra.Command, args []string) error {
 		module,
 		outputModuleHash,
 		clientConfig,
-		logger,
+		zap.NewNop(),
 		tracer,
 		sink.WithBlockRange(br),
 	)
