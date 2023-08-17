@@ -3,13 +3,15 @@ package data
 import (
 	"context"
 	"fmt"
+	"time"
+
 	pb "github.com/streamingfast/honey-tracker/data/pb/hivemapper/v1"
 	data "github.com/streamingfast/honey-tracker/utils"
 	sink "github.com/streamingfast/substreams-sink"
 	pbsubstreamsrpc "github.com/streamingfast/substreams/pb/sf/substreams/rpc/v2"
+	v1 "github.com/streamingfast/substreams/pb/sf/substreams/v1"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
-	"time"
 )
 
 type Sinker struct {
@@ -17,6 +19,8 @@ type Sinker struct {
 	*sink.Sinker
 	db                         DB
 	averageBlockTimeProcessing *data.AverageInt64
+	averageBlockSec            *data.AverageInt64
+	lastClock                  *v1.Clock
 }
 
 func NewSinker(logger *zap.Logger, sink *sink.Sinker, db DB) *Sinker {
@@ -24,13 +28,25 @@ func NewSinker(logger *zap.Logger, sink *sink.Sinker, db DB) *Sinker {
 		logger:                     logger,
 		Sinker:                     sink,
 		db:                         db,
-		averageBlockTimeProcessing: data.NewAverageInt64WithCount("handle_block_time_processing_ms", 1000),
+		averageBlockTimeProcessing: data.NewAverageInt64WithCount("average block processing time", 1000),
+		averageBlockSec:            data.NewAverageInt64WithCount("average received block second", 1000),
 	}
 }
 
 func (s *Sinker) Run(ctx context.Context) error {
 	//todo: get cursor
 	//var cursor *sink.Cursor
+
+	go func() {
+		for {
+			time.Sleep(5 * time.Second)
+			if s.lastClock != nil {
+				s.logger.Info("progress_block", zap.Stringer("block", s.lastClock))
+			}
+			s.logger.Info(s.averageBlockSec.String())
+			s.logger.Info(s.averageBlockTimeProcessing.String())
+		}
+	}()
 
 	cursor, err := s.db.FetchCursor()
 	if err != nil {
@@ -63,16 +79,7 @@ func (s *Sinker) HandleBlockScopedData(ctx context.Context, data *pbsubstreamsrp
 		return fmt.Errorf("received data from wrong output module, expected to received from %q but got module's output for %q", s.OutputModuleName(), output.Name)
 	}
 
-	if data.Clock.Number%1000 == 0 {
-		s.logger.Info(s.averageBlockTimeProcessing.String())
-		s.averageBlockTimeProcessing.Reset()
-	}
-
 	if len(output.GetMapOutput().GetValue()) == 0 {
-		if data.Clock.Number%1000 == 0 {
-			s.logger.Info("progress_block", zap.Uint64("block", data.Clock.Number))
-			s.averageBlockTimeProcessing.Reset()
-		}
 		return s.db.StoreCursor(cursor)
 	}
 
