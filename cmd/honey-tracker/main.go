@@ -54,13 +54,16 @@ func rootRun(cmd *cobra.Command, args []string) error {
 	flagInsecure := sflags.MustGetBool(cmd, "insecure")
 	flagPlaintext := sflags.MustGetBool(cmd, "plaintext")
 
-	db := data.NewPostgreSQL(&data.PsqlInfo{
-		Host:     sflags.MustGetString(cmd, "db-host"),
-		Port:     sflags.MustGetInt(cmd, "db-port"),
-		User:     sflags.MustGetString(cmd, "db-user"),
-		Password: sflags.MustGetString(cmd, "db-password"),
-		Dbname:   sflags.MustGetString(cmd, "db-name"),
-	})
+	db := data.NewPostgreSQL(
+		&data.PsqlInfo{
+			Host:     sflags.MustGetString(cmd, "db-host"),
+			Port:     sflags.MustGetInt(cmd, "db-port"),
+			User:     sflags.MustGetString(cmd, "db-user"),
+			Password: sflags.MustGetString(cmd, "db-password"),
+			Dbname:   sflags.MustGetString(cmd, "db-name"),
+		},
+		logger,
+	)
 	err := db.Init()
 	checkError(err)
 

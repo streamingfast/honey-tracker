@@ -38,11 +38,10 @@ func (s *Sinker) Run(ctx context.Context) error {
 }
 
 func (s *Sinker) HandleBlockScopedData(ctx context.Context, data *pbsubstreamsrpc.BlockScopedData, isLive *bool, cursor *sink.Cursor) (err error) {
-
 	defer func() {
 		if err != nil {
 			e := s.db.RollbackTransaction()
-			err = fmt.Errorf("rollback transaction: %w: while handling err %w", e, err)
+			err = fmt.Errorf("block: %d rollback transaction: %w: while handling err %w", data.Clock.Number, e, err)
 			return
 		}
 		err = s.db.CommitTransaction()

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"go.uber.org/zap"
 
 	_ "github.com/lib/pq"
 	pb "github.com/streamingfast/honey-tracker/data/pb/hivemapper/v1"
@@ -12,8 +13,9 @@ import (
 )
 
 type Psql struct {
-	db *sql.DB
-	tx *sql.Tx
+	db     *sql.DB
+	tx     *sql.Tx
+	logger *zap.Logger
 }
 
 type PsqlInfo struct {
@@ -32,13 +34,14 @@ func (i *PsqlInfo) GetPsqlInfo() string {
 	return psqlInfo
 }
 
-func NewPostgreSQL(psqlInfo *PsqlInfo) *Psql {
+func NewPostgreSQL(psqlInfo *PsqlInfo, logger *zap.Logger) *Psql {
 	db, err := sql.Open("postgres", psqlInfo.GetPsqlInfo())
 	if err != nil {
 		panic(err)
 	}
 	return &Psql{
-		db: db,
+		db:     db,
+		logger: logger,
 	}
 }
 
@@ -64,6 +67,7 @@ func (p *Psql) HandleClock(clock *pbsubstreams.Clock) (dbBlockID int64, err erro
 func (p *Psql) handleTransaction(dbBlockID int64, transactionHash string) (dbTransactionID int64, err error) {
 	//todo: create a transaction cache
 	rows, err := p.tx.Query("SELECT id FROM hivemapper.transactions WHERE hash = $1", transactionHash)
+	p.logger.Debug("handling transaction", zap.String("trx_hash", transactionHash))
 	if err != nil {
 		return 0, fmt.Errorf("selecting transaction: %w", err)
 	}
@@ -90,9 +94,9 @@ func (p *Psql) HandleInitializedAccount(dbBlockID int64, initializedAccounts []*
 		if err != nil {
 			return fmt.Errorf("handling transaction: %w", err)
 		}
-		_, err = p.tx.Exec("INSERT INTO hivemapper.derived_addresses (transaction_id, address, derivedAddress) VALUES ($1, $2, $3)", dbTransactionID, initializedAccount.Owner, initializedAccount.Account)
+		_, err = p.tx.Exec("INSERT INTO hivemapper.derived_addresses (transaction_id, address, derivedAddress) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING", dbTransactionID, initializedAccount.Owner, initializedAccount.Account)
 		if err != nil {
-			return fmt.Errorf("inserting derived_addresses: %w", err)
+			return fmt.Errorf("trx_hash: %d inserting derived_addresses: %w", dbBlockID, err)
 		}
 	}
 	return nil
