@@ -65,6 +65,7 @@ func (s *Sinker) Run(ctx context.Context) error {
 
 func (s *Sinker) HandleBlockScopedData(ctx context.Context, data *pbsubstreamsrpc.BlockScopedData, isLive *bool, cursor *sink.Cursor) (err error) {
 	startTime := time.Now()
+	s.blockSecCount++
 
 	defer func() {
 		s.averageBlockTimeProcessing.Add(time.Since(startTime).Milliseconds())
