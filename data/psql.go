@@ -191,7 +191,6 @@ func (p *Psql) HandleRegularDriverPayments(dbBlockID int64, payments []*pb.Regul
 		if err != nil {
 			return fmt.Errorf("inserting payment: %w", err)
 		}
-		return nil
 	}
 	return nil
 }
@@ -213,8 +212,6 @@ func (p *Psql) HandleNoneSplitPayments(dbBlockID int64, payments []*pb.NoSplitPa
 		if err != nil {
 			return fmt.Errorf("inserting payment: %w", err)
 		}
-		return nil
-
 	}
 	return nil
 }
