@@ -124,7 +124,7 @@ func (p *Psql) resolveAddress(derivedAddress string) (string, error) {
 func (p *Psql) handleDriver(dbTransactionID int64, driverAddress string) (dbDriverID int64, err error) {
 	rows, err := p.tx.Query("SELECT id FROM hivemapper.drivers WHERE address = $1", driverAddress)
 	if err != nil {
-		return 0, fmt.Errorf("selecting drivers: %w", err)
+		return 0, fmt.Errorf("selecting drivers %q : %w", driverAddress, err)
 	}
 
 	if rows.Next() {
@@ -146,7 +146,7 @@ func (p *Psql) handleDriver(dbTransactionID int64, driverAddress string) (dbDriv
 func (p *Psql) handleFleet(dbTransactionID int64, fleetAddress string) (dbDriverID int64, err error) {
 	rows, err := p.tx.Query("SELECT id FROM hivemapper.fleets WHERE address = $1", fleetAddress)
 	if err != nil {
-		return 0, fmt.Errorf("selecting fleets: %w", err)
+		return 0, fmt.Errorf("selecting fleets %q: %w", fleetAddress, err)
 	}
 	if rows.Next() {
 		err = rows.Scan(&dbDriverID)
