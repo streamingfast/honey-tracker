@@ -129,9 +129,10 @@ func (p *Psql) handleDriver(dbTransactionID int64, driverAddress string) (dbDriv
 
 	if rows.Next() {
 		err = rows.Scan(&dbDriverID)
+		rows.Close()
 		return
 	}
-	defer rows.Close()
+	rows.Close()
 
 	row := p.tx.QueryRow("INSERT INTO hivemapper.drivers (address, transaction_id) VALUES ($1, $2) RETURNING id", driverAddress, dbTransactionID)
 	err = row.Err()
@@ -150,9 +151,11 @@ func (p *Psql) handleFleet(dbTransactionID int64, fleetAddress string) (dbDriver
 	}
 	if rows.Next() {
 		err = rows.Scan(&dbDriverID)
+		rows.Close()
 		return
 	}
-	defer rows.Close()
+
+	rows.Close()
 
 	row := p.tx.QueryRow("INSERT INTO hivemapper.fleets (address, transaction_id) VALUES ($1, $2) RETURNING id", fleetAddress, dbTransactionID)
 	err = row.Err()
@@ -172,9 +175,10 @@ func (p *Psql) handleFleetDriver(dbTransactionID int64, dbFleetID int64, dbDrive
 
 	if rows.Next() {
 		err = rows.Scan(&dbDriverID)
+		rows.Close()
 		return
 	}
-	defer rows.Close()
+	rows.Close()
 
 	row := p.tx.QueryRow("INSERT INTO hivemapper.fleet_drivers (transaction_id, fleet_id, driver_id) VALUES ($1, $2, $3) RETURNING id", dbTransactionID, dbFleetID, dbDriverID)
 	err = row.Err()
