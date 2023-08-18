@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+
 	"go.uber.org/zap"
 
 	_ "github.com/lib/pq"
@@ -258,7 +259,7 @@ func (p *Psql) HandleSplitPayments(dbBlockID int64, splitPayments []*pb.TokenSpl
 			return fmt.Errorf("inserting driver mint: %w", err)
 		}
 
-		_, err = p.tx.Exec("INSERT INTO hivemapper.split_payments (driver_id, fleet_id, transaction_id, fleet_mint_id, driver_mint_id) VALUES ($1, $2, $3, $4, $5)", driverID, fleetID, dbTransactionID, fleetMintID, driverMintID)
+		_, err = p.tx.Exec("INSERT INTO hivemapper.split_payments (transaction_id, fleet_mint_id, driver_mint_id) VALUES ($1, $2, $3,)", dbTransactionID, fleetMintID, driverMintID)
 		if err != nil {
 			return fmt.Errorf("inserting split payment: %w", err)
 		}
