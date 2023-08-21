@@ -83,7 +83,7 @@ func rootRun(cmd *cobra.Command, args []string) error {
 		module,
 		outputModuleHash,
 		clientConfig,
-		zap.NewNop(),
+		logger,
 		tracer,
 		sink.WithBlockRange(br),
 		sink.WithAverageBlockSec("average received block second", 30),
