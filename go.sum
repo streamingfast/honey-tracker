@@ -405,6 +405,7 @@ github.com/streamingfast/substreams v1.1.8-0.20230705171054-90758978ac9c h1:MJYR
 github.com/streamingfast/substreams v1.1.8-0.20230705171054-90758978ac9c/go.mod h1:DN3bHz1wZK/k1ieV3yVaj+j87Bty++rx4Jc4x7GlBaw=
 github.com/streamingfast/substreams-sink v0.3.1-0.20230817185211-77f39db34541 h1:V6LfAkjDTa1jf643iiJLUuKBFsyG9dyk1JHDwHAogIE=
 github.com/streamingfast/substreams-sink v0.3.1-0.20230817185211-77f39db34541/go.mod h1:kR0Tdmu2RxyfRH4mQN39Y8Sq6MY3ikQMgYOueLGZTeI=
+github.com/streamingfast/substreams-sink v0.3.1-0.20230821123527-9327cd7461d0/go.mod h1:kR0Tdmu2RxyfRH4mQN39Y8Sq6MY3ikQMgYOueLGZTeI=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/objx v0.4.0/go.mod h1:YvHI0jy2hoMjB+UWwv71VJQ9isScKT/TqJzVSSt89Yw=
 github.com/stretchr/objx v0.5.0/go.mod h1:Yh+to48EsGEfYuaHDzXPcE3xhTkx73EhmCGUpEOglKo=
