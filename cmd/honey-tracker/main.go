@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/streamingfast/bstream"
+
 	"github.com/spf13/cobra"
 	"github.com/streamingfast/cli/sflags"
 
@@ -33,6 +35,8 @@ func init() {
 	RootCmd.Flags().String("db-user", "user", "PostgreSQL user")
 	RootCmd.Flags().String("db-password", "secureme", "PostgreSQL password")
 	RootCmd.Flags().String("db-name", "postgres", "PostgreSQL database name")
+	RootCmd.Flags().Uint64("start-block", 0, "start block number (0 means no start block)")
+	RootCmd.Flags().Uint64("stop-block", 0, "stop block number (0 means no stop block)")
 
 	// Manifest
 	RootCmd.Flags().String("output-module-type", "proto:hivemapper.types.v1.Output", "Expected output module type")
@@ -53,6 +57,8 @@ func rootRun(cmd *cobra.Command, args []string) error {
 
 	flagInsecure := sflags.MustGetBool(cmd, "insecure")
 	flagPlaintext := sflags.MustGetBool(cmd, "plaintext")
+	startBlock := sflags.MustGetUint64(cmd, "start-block")
+	stopBlock := sflags.MustGetUint64(cmd, "start-block")
 
 	db := data.NewPostgreSQL(
 		&data.PsqlInfo{
@@ -77,6 +83,20 @@ func rootRun(cmd *cobra.Command, args []string) error {
 	pkg, module, outputModuleHash, br, err := sink.ReadManifestAndModuleAndBlockRange(manifestPath, nil, outputModuleName, expectedOutputModuleType, false, "", logger)
 	checkError(err)
 
+	options := []sink.Option{
+		sink.WithBlockRange(br),
+		sink.WithAverageBlockSec("average received block second", 30),
+		sink.WithAverageBlockTimeProcessing("average block processing time", 1000),
+	}
+
+	if startBlock > 0 && stopBlock > 0 {
+		blockRange, err := bstream.NewRangeContaining(startBlock, stopBlock)
+		if err != nil {
+			return fmt.Errorf("creating block range: %w", err)
+		}
+		options = append(options, sink.WithBlockRange(blockRange))
+	}
+
 	s, err := sink.New(
 		sink.SubstreamsModeProduction,
 		pkg,
@@ -85,9 +105,7 @@ func rootRun(cmd *cobra.Command, args []string) error {
 		clientConfig,
 		logger,
 		tracer,
-		sink.WithBlockRange(br),
-		sink.WithAverageBlockSec("average received block second", 30),
-		sink.WithAverageBlockTimeProcessing("average block processing time", 1000),
+		options...,
 	)
 	checkError(err)
 
