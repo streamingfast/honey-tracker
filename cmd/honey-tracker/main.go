@@ -5,17 +5,14 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/streamingfast/bstream"
-
 	"github.com/spf13/cobra"
+	"github.com/streamingfast/bstream"
 	"github.com/streamingfast/cli/sflags"
-
-	"go.uber.org/zap"
-
 	"github.com/streamingfast/honey-tracker/data"
 	"github.com/streamingfast/logging"
 	sink "github.com/streamingfast/substreams-sink"
 	"github.com/streamingfast/substreams/client"
+	"go.uber.org/zap"
 )
 
 var RootCmd = &cobra.Command{

@@ -16,12 +16,12 @@ import (
 type Sinker struct {
 	logger *zap.Logger
 	*sink.Sinker
-	db            DB
+	db            *Psql
 	lastClock     *v1.Clock
 	blockSecCount int64
 }
 
-func NewSinker(logger *zap.Logger, sink *sink.Sinker, db DB) *Sinker {
+func NewSinker(logger *zap.Logger, sink *sink.Sinker, db *Psql) *Sinker {
 	return &Sinker{
 		logger: logger,
 		Sinker: sink,
@@ -114,6 +114,10 @@ func (s *Sinker) HandleBlockScopedData(ctx context.Context, data *pbsubstreamsrp
 
 	if err := s.db.HandleRegularDriverPayments(dbBlockID, moduleOutput.RegularDriverPayments); err != nil {
 		return fmt.Errorf("handle payments: %w", err)
+	}
+
+	if err := s.db.HandleAITrainerPayments(dbBlockID, moduleOutput.AiTrainerPayments); err != nil {
+		return fmt.Errorf("handle AiTrainerPayments: %w", err)
 	}
 
 	if err := s.db.HandleSplitPayments(dbBlockID, moduleOutput.TokenSplittingPayments); err != nil {
