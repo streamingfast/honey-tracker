@@ -12,4 +12,5 @@ models:
           - not_null
         meta:
           dimension:
+            label: "Fleet Count"
             type: number
