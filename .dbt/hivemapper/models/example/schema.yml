@@ -1,0 +1,12 @@
+
+version: 2
+
+models:
+  - name: dbt_fleet_count
+    description: "Fleet Count"
+    columns:
+      - name: fleet_count
+        description: "The count"
+        tests:
+          - unique
+          - not_null

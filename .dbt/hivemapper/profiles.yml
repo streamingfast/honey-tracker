@@ -1,0 +1,20 @@
+hivemapper:
+  outputs:
+    dev:
+      type: postgres
+      host: localhost
+      user: dev
+      password: SecureMe!
+      port: 5433
+      dbname: hivemapper
+      schema: hivemapper
+    prod:
+      type: postgres
+      host: localhost
+      user: dev
+      password: SecureMe!
+      port: 5433
+      dbname: hivemapper
+      schema: hivemapper
+
+  target: dev
