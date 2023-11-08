@@ -124,6 +124,10 @@ func (s *Sinker) HandleBlockScopedData(ctx context.Context, data *pbsubstreamsrp
 		return fmt.Errorf("handle split payments: %w", err)
 	}
 
+	if err := s.db.HandleNoneSplitPayments(dbBlockID, moduleOutput.NoSplitPayments); err != nil {
+		return fmt.Errorf("handle split payments: %w", err)
+	}
+
 	if err := s.db.HandleTransfers(dbBlockID, moduleOutput.Transfers); err != nil {
 		return fmt.Errorf("handle transfers: %w", err)
 	}
