@@ -14,3 +14,26 @@ models:
           dimension:
             label: "Fleet Count"
             type: number
+  - name: dbt_driver_count
+    description: "Driver Count"
+    columns:
+      - name: driver_count
+        description: "The count"
+        tests:
+          - unique
+          - not_null
+        meta:
+          dimension:
+            label: "Driver Count"
+            type: number
+  - name: dbt_payment_total
+    description: "Total Payment"
+    columns:
+      - name: total_payments
+        tests:
+          - unique
+          - not_null
+        meta:
+          dimension:
+            label: "Total Payment"
+            type: number
