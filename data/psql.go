@@ -224,7 +224,7 @@ func (p *Psql) HandleNoneSplitPayments(dbBlockID int64, payments []*pb.NoSplitPa
 		}
 
 		//todo: detect drive vs fleet from backend api
-		_, err = p.db.Exec("INSERT INTO hivemapper.no_split_payments (mint_id) VALUES ($1) RETURNING id", mintDbID)
+		_, err = p.tx.Exec("INSERT INTO hivemapper.no_split_payments (mint_id) VALUES ($1) RETURNING id", mintDbID)
 		if err != nil {
 			return fmt.Errorf("inserting NoneSplitPayments with mint_id %d mint_to %q tx %q: %w", mintDbID, payment.Mint.To, payment.Mint.TrxHash, err)
 		}
