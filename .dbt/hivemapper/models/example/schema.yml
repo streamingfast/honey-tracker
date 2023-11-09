@@ -37,3 +37,5 @@ models:
           dimension:
             label: "Total Payment"
             type: number
+  - name: dbt_payment_per_month
+    description: "payment_per_month"
