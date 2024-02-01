@@ -89,6 +89,14 @@ func (p *Psql) handleTransaction(dbBlockID int64, transactionHash string) (dbTra
 	return
 }
 
+func (p *Psql) HandleBlockUndo(blockId string) error {
+	_, err := p.tx.Exec("DELETE CASCADE FROM solana_tokens.blocks WHERE hash = $1", blockId)
+	if err != nil {
+		return fmt.Errorf("deleting block: %w", err)
+	}
+	return nil
+}
+
 func (p *Psql) HandleInitializedAccount(dbBlockID int64, initializedAccounts []*pb.InitializedAccount) (err error) {
 	for _, initializedAccount := range initializedAccounts {
 		dbTransactionID, err := p.handleTransaction(dbBlockID, initializedAccount.TrxHash)
