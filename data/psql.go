@@ -106,12 +106,12 @@ func (p *Psql) HandleInitializedAccount(dbBlockID int64, initializedAccounts []*
 func (p *Psql) HandleBlocksUndo(lastValidBlockNum uint64) error {
 	_, err := p.tx.Exec("DELETE CASCADE FROM solana_tokens.blocks WHERE num > $1", lastValidBlockNum)
 	if err != nil {
-		return fmt.Errorf("deleting block from %s: %w", lastValidBlockNum, err)
+		return fmt.Errorf("deleting block from %d: %w", lastValidBlockNum, err)
 	}
 	return nil
 }
 
-var NotFound = errors.New("Not found")
+var NotFound = errors.New("not found")
 
 func (p *Psql) resolveAddress(derivedAddress string) (string, error) {
 	resolvedAddress := ""
