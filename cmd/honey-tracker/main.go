@@ -115,6 +115,7 @@ func rootRun(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("runnning sinker:%w", err)
 	}
+
 	return nil
 }
 func main() {
