@@ -4,9 +4,9 @@ plugins:
     out: ../data/pb
     opt:
       - paths=source_relative
-      - Mhivemapper/v1/hivemapper.proto=github.com/streamingfast/honey-tracker/data/pb
-  - plugin: buf.build/community/planetscale-vtprotobuf:v0.6.0
-    out: ../data/pb
-    opt:
-      - paths=source_relative
-      - Mhivemapper/v1/hivemapper.proto=github.com/streamingfast/honey-tracker/data/pb
+      - Mhivemapper/v1/hivemapper.proto=github.com/streamingfast/honey-tracker/data/pb/hivemapper/v1
+#  - plugin: buf.build/community/planetscale-vtprotobuf:v0.6.0
+#    out: ../data/pb
+#    opt:
+#      - paths=source_relative
+#      - Mhivemapper/v1/hivemapper.proto=github.com/streamingfast/honey-tracker/data/pb

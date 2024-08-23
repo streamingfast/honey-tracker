@@ -1,0 +1,7 @@
+syntax = "proto3";
+
+package tracker;
+
+option go_package = "github.com/streamingfast/honey-tracker/data/pb/tracker";
+
+import "hivemapper/v1/hivemapper.proto";
