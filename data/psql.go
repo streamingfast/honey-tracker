@@ -353,6 +353,27 @@ func (p *Psql) HandleAITrainerPayments(dbBlockID int64, payments []*pb.AiTrainer
 	return nil
 }
 
+func (p *Psql) HandleOperationalPayments(dbBlockID int64, payments []*pb.OperationalPayment) error {
+	for _, payment := range payments {
+		dbTransactionID, err := p.handleTransaction(dbBlockID, payment.Mint.TrxHash)
+		if err != nil {
+			return fmt.Errorf("inserting transaction: %w", err)
+		}
+
+		mintDbID, err := p.insertMint(dbTransactionID, payment.Mint)
+		if err != nil {
+			return fmt.Errorf("inserting mint: %w", err)
+		}
+
+		_, err = p.tx.Exec("INSERT INTO hivemapper.operational_payments (mint_id) VALUES ($1) RETURNING id", mintDbID)
+		if err != nil {
+			return fmt.Errorf("inserting payment: %w", err)
+		}
+	}
+
+	return nil
+}
+
 func (p *Psql) insertBurns(dbTransactionID int64, burn *pb.Burn) (dbMintID int64, err error) {
 	row := p.tx.QueryRow("INSERT INTO hivemapper.burns (transaction_id, from_address, amount) VALUES ($1, $2, $3) RETURNING id", dbTransactionID, burn.From, burn.Amount)
 	err = row.Err()

@@ -1,0 +1,7 @@
+version: v1
+name: buf.build/streamingfast/firehose-gear
+deps:
+  - buf.build/streamingfast/hivemapper
+breaking:
+  use:
+    - FILE

@@ -14,10 +14,10 @@
 # limitations under the License.
 
 ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && cd ../.. && pwd )"
-
+echo "Root folder: $ROOT"
 # Protobuf definitions
-PROTO_HIVEMAPPER=${2:-"$ROOT/../substreams-hivemapper/proto"}
-
+PROTO_HIVEMAPPER=${2:-"$ROOT/../substreams-hivemapper/proto/"}
+echo "Hivemapper proto: $PROTO_HIVEMAPPER"
 function main() {
   checks
 

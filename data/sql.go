@@ -73,6 +73,12 @@ CREATE TABLE IF NOT EXISTS hivemapper.ai_payments (
 	CONSTRAINT fk_mint FOREIGN KEY (mint_id) REFERENCES hivemapper.mints(id)
 );
 
+CREATE TABLE IF NOT EXISTS hivemapper.operational_payments (
+	id SERIAL PRIMARY KEY,
+	mint_id INTEGER NOT NULL,
+	CONSTRAINT fk_mint FOREIGN KEY (mint_id) REFERENCES hivemapper.mints(id)
+);
+
 CREATE TABLE IF NOT EXISTS hivemapper.split_payments (
 	id SERIAL PRIMARY KEY,
 	transaction_id INTEGER NOT NULL,
