@@ -1,3 +1,4 @@
 .idea
 /honey-tracker
 /dbt/logs/dbt.log
+.fleet
