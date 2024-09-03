@@ -394,6 +394,26 @@ func (p *Psql) HandleRewardPayments(dbBlockID int64, payments []*pb.RewardPaymen
 
 	return nil
 }
+func (p *Psql) HandleMapCreate(dbBlockID int64, payments []*pb.MapCreate) error {
+	for _, payment := range payments {
+		dbTransactionID, err := p.handleTransaction(dbBlockID, payment.Burn.TrxHash)
+		if err != nil {
+			return fmt.Errorf("inserting transaction: %w", err)
+		}
+
+		burnDbID, err := p.insertBurns(dbTransactionID, payment.Burn)
+		if err != nil {
+			return fmt.Errorf("inserting mint: %w", err)
+		}
+
+		_, err = p.tx.Exec("INSERT INTO hivemapper.map_create (burn_id) VALUES ($1) RETURNING id", burnDbID)
+		if err != nil {
+			return fmt.Errorf("inserting reward_payments: %w", err)
+		}
+	}
+
+	return nil
+}
 
 func (p *Psql) insertBurns(dbTransactionID int64, burn *pb.Burn) (dbMintID int64, err error) {
 	row := p.tx.QueryRow("INSERT INTO hivemapper.burns (transaction_id, from_address, amount) VALUES ($1, $2, $3) RETURNING id", dbTransactionID, burn.From, burn.Amount)
