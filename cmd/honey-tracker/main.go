@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/streamingfast/bstream"
@@ -34,6 +35,7 @@ func init() {
 	RootCmd.Flags().String("db-name", "postgres", "PostgreSQL database name")
 	RootCmd.Flags().Uint64("start-block", 0, "start block number (0 means no start block)")
 	RootCmd.Flags().Uint64("stop-block", 0, "stop block number (0 means no stop block)")
+	RootCmd.Flags().Duration("startup-delay", time.Duration(0), "stop block number (0 means no stop block)")
 
 	// Manifest
 	RootCmd.Flags().String("output-module-type", "proto:hivemapper.types.v1.Output", "Expected output module type")
@@ -43,6 +45,10 @@ func rootRun(cmd *cobra.Command, args []string) error {
 	apiToken := os.Getenv("SUBSTREAMS_API_TOKEN")
 	if apiToken == "" {
 		return fmt.Errorf("missing SUBSTREAMS_API_TOKEN environment variable")
+	}
+
+	if sflags.MustGetDuration(cmd, "startup-delay") != time.Duration(0) {
+		time.Sleep(sflags.MustGetDuration(cmd, "startup-delay"))
 	}
 
 	logger, tracer := logging.ApplicationLogger("honey-tracker", "honey-tracker")
