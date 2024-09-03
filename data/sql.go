@@ -61,6 +61,14 @@ CREATE TABLE IF NOT EXISTS hivemapper.mints (
 	CONSTRAINT fk_transaction FOREIGN KEY (transaction_id) REFERENCES hivemapper.transactions(id)
 );
 
+CREATE TABLE IF NOT EXISTS hivemapper.burns (
+	id SERIAL PRIMARY KEY,
+	transaction_id INTEGER NOT NULL,
+	from_address TEXT NOT NULL,
+	amount DECIMAL NOT NULL,
+	CONSTRAINT fk_transaction FOREIGN KEY (transaction_id) REFERENCES hivemapper.transactions(id)
+);
+
 CREATE TABLE IF NOT EXISTS hivemapper.payments (
 	id SERIAL PRIMARY KEY,
 	mint_id INTEGER NOT NULL,
@@ -115,11 +123,4 @@ CREATE TABLE IF NOT EXISTS hivemapper.transfers (
 	CONSTRAINT fk_transaction FOREIGN KEY (transaction_id) REFERENCES hivemapper.transactions(id)
 );
 
-CREATE TABLE IF NOT EXISTS hivemapper.burns (
-	id SERIAL PRIMARY KEY,
-	transaction_id INTEGER NOT NULL,
-	from_address TEXT NOT NULL,
-	amount DECIMAL NOT NULL,
-	CONSTRAINT fk_transaction FOREIGN KEY (transaction_id) REFERENCES hivemapper.transactions(id)
-);
 `
