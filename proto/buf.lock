@@ -4,5 +4,5 @@ deps:
   - remote: buf.build
     owner: streamingfast
     repository: hivemapper
-    commit: 9eceba3b1aa44864aa4e9d415dec10e2
-    digest: shake256:2d49d9e45b354fc3020053c30537f44e59160b688a62bcbef6fb13d03e8893aaeac155b596e31afd81486e863f06406792bf3208e26b6b4cef96a96b15c97b5e
+    commit: 035afc37d0a144bca8f1a6dedc8a0396
+    digest: shake256:bef405c525ca81fc4bb720ae44be3f7b6cc6e2c9d79e034c6cf646d124a90b83721fcb247dcf01c30c0d1c42aaf9dbd5ec420acd6ac0fdd644c89b61233a712a

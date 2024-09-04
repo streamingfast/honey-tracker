@@ -132,6 +132,10 @@ func (s *Sinker) HandleBlockScopedData(ctx context.Context, data *pbsubstreamsrp
 		return fmt.Errorf("handle HandleMapCreate: %w", err)
 	}
 
+	if err := s.db.HandleMapConsumptionReward(dbBlockID, moduleOutput.MapConsumptionReward); err != nil {
+		return fmt.Errorf("handle HandleMapConsumptionReward: %w", err)
+	}
+
 	if err := s.db.HandleSplitPayments(dbBlockID, moduleOutput.TokenSplittingPayments); err != nil {
 		return fmt.Errorf("handle split payments: %w", err)
 	}

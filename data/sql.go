@@ -81,6 +81,12 @@ CREATE TABLE IF NOT EXISTS hivemapper.map_create (
 	CONSTRAINT fk_mint FOREIGN KEY (burn_id) REFERENCES hivemapper.burns(id)
 );
 
+CREATE TABLE IF NOT EXISTS hivemapper.map_consumption_reward (
+	id SERIAL PRIMARY KEY,
+	mint_id INTEGER NOT NULL,
+	CONSTRAINT fk_mint FOREIGN KEY (mint_id) REFERENCES hivemapper.mints(id)
+);
+
 CREATE TABLE IF NOT EXISTS hivemapper.ai_payments (
 	id SERIAL PRIMARY KEY,
 	mint_id INTEGER NOT NULL,
