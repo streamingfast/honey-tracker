@@ -91,8 +91,8 @@ func (p *Psql) handleTransaction(dbBlockID int64, transactionHash string) (dbTra
 		return 0, fmt.Errorf("inserting transaction: %w", err)
 	}
 
-	p.TransactionIDs[transactionHash] = dbTransactionID
 	err = row.Scan(&dbTransactionID)
+	p.TransactionIDs[transactionHash] = dbTransactionID
 	return
 }
 
