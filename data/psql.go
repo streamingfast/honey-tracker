@@ -13,6 +13,13 @@ import (
 	pbsubstreams "github.com/streamingfast/substreams/pb/sf/substreams/v1"
 )
 
+type PreparedStatement struct {
+	insertMint        *sql.Stmt
+	insertTransaction *sql.Stmt
+}
+
+var preparedStatement *PreparedStatement
+
 type Psql struct {
 	db             *sql.DB
 	tx             *sql.Tx
@@ -41,6 +48,22 @@ func NewPostgreSQL(psqlInfo *PsqlInfo, logger *zap.Logger) *Psql {
 	if err != nil {
 		panic(err)
 	}
+
+	insertMing, err := db.Prepare("INSERT INTO hivemapper.mints (transaction_id, to_address, amount) VALUES ($1, $2, $3) RETURNING id")
+	if err != nil {
+		panic(err)
+	}
+
+	insertTransaction, err := db.Prepare("INSERT INTO hivemapper.transactions (hash, block_id) VALUES ($1, $2) RETURNING id")
+	if err != nil {
+		panic(err)
+	}
+
+	preparedStatement = &PreparedStatement{
+		insertMint:        insertMing,
+		insertTransaction: insertTransaction,
+	}
+
 	return &Psql{
 		db:     db,
 		logger: logger,
@@ -85,7 +108,7 @@ func (p *Psql) handleTransaction(dbBlockID int64, transactionHash string) (dbTra
 		return id, nil
 	}
 
-	row := p.tx.QueryRow("INSERT INTO hivemapper.transactions (hash, block_id) VALUES ($1, $2) RETURNING id", transactionHash, dbBlockID)
+	row := p.tx.Stmt(preparedStatement.insertTransaction).QueryRow(transactionHash, dbBlockID)
 	err = row.Err()
 	if err != nil {
 		return 0, fmt.Errorf("inserting transaction: %w", err)
@@ -315,7 +338,8 @@ func (p *Psql) HandleTransfers(dbBlockID int64, transfers []*pb.Transfer) error 
 }
 
 func (p *Psql) insertMint(dbTransactionID int64, mint *pb.Mint) (dbMintID int64, err error) {
-	row := p.tx.QueryRow("INSERT INTO hivemapper.mints (transaction_id, to_address, amount) VALUES ($1, $2, $3) RETURNING id", dbTransactionID, mint.To, mint.Amount)
+	row := p.tx.Stmt(preparedStatement.insertMint).QueryRow(dbTransactionID, mint.To, mint.Amount)
+	//row := p.tx.QueryRow("INSERT INTO hivemapper.mints (transaction_id, to_address, amount) VALUES ($1, $2, $3) RETURNING id", dbTransactionID, mint.To, mint.Amount)
 	err = row.Err()
 	if err != nil {
 		return 0, fmt.Errorf("inserting mint: %w", err)
