@@ -65,6 +65,7 @@ func (s *Sinker) HandleBlockScopedData(ctx context.Context, data *pbsubstreamsrp
 	s.blockSecCount++
 	s.lastClock = data.Clock
 	hasTransaction := false
+	s.db.TransactionIDs = map[string]int64{}
 
 	defer func() {
 		s.Sinker.AverageBlockTimeProcessing().Add(time.Since(startTime).Milliseconds())

@@ -14,9 +14,10 @@ import (
 )
 
 type Psql struct {
-	db     *sql.DB
-	tx     *sql.Tx
-	logger *zap.Logger
+	db             *sql.DB
+	tx             *sql.Tx
+	logger         *zap.Logger
+	TransactionIDs map[string]int64
 }
 
 type PsqlInfo struct {
@@ -66,17 +67,22 @@ func (p *Psql) HandleClock(clock *pbsubstreams.Clock) (dbBlockID int64, err erro
 }
 
 func (p *Psql) handleTransaction(dbBlockID int64, transactionHash string) (dbTransactionID int64, err error) {
-	//todo: create a transaction cache
-	rows, err := p.tx.Query("SELECT id FROM hivemapper.transactions WHERE hash = $1", transactionHash)
-	p.logger.Debug("handling transaction", zap.String("trx_hash", transactionHash))
-	if err != nil {
-		return 0, fmt.Errorf("selecting transaction: %w", err)
-	}
-	defer rows.Close()
 
-	if rows.Next() {
-		err = rows.Scan(&dbTransactionID)
-		return
+	////todo: create a transaction cache
+	//rows, err := p.tx.Query("SELECT id FROM hivemapper.transactions WHERE hash = $1", transactionHash)
+	//p.logger.Debug("handling transaction", zap.String("trx_hash", transactionHash))
+	//if err != nil {
+	//	return 0, fmt.Errorf("selecting transaction: %w", err)
+	//}
+	//defer rows.Close()
+	//
+	//if rows.Next() {
+	//	err = rows.Scan(&dbTransactionID)
+	//	return
+	//}
+
+	if id, found := p.TransactionIDs[transactionHash]; found {
+		return id, nil
 	}
 
 	row := p.tx.QueryRow("INSERT INTO hivemapper.transactions (hash, block_id) VALUES ($1, $2) RETURNING id", transactionHash, dbBlockID)
@@ -85,6 +91,7 @@ func (p *Psql) handleTransaction(dbBlockID int64, transactionHash string) (dbTra
 		return 0, fmt.Errorf("inserting transaction: %w", err)
 	}
 
+	p.TransactionIDs[transactionHash] = dbTransactionID
 	err = row.Scan(&dbTransactionID)
 	return
 }
