@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS hivemapper.blocks (
 	id SERIAL PRIMARY KEY,
 	number INTEGER NOT NULL,
 	hash TEXT NOT NULL,
+	hash TEXT NOT NULL,
 	timestamp TIMESTAMP NOT NULL
 );
 
