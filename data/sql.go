@@ -13,6 +13,10 @@ CREATE TABLE IF NOT EXISTS hivemapper.blocks (
 	hash TEXT NOT NULL,
 	timestamp TIMESTAMP NOT NULL
 );
+CREATE TABLE IF NOT EXISTS hivemapper.prices (
+	timestamp TIMESTAMP PRIMARY KEY,
+	price DECIMAL NOT NULL
+);
 
 CREATE TABLE IF NOT EXISTS hivemapper.transactions (
 	id SERIAL PRIMARY KEY,

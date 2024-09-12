@@ -6,6 +6,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/streamingfast/honey-tracker/price"
+
 	"github.com/spf13/cobra"
 	"github.com/streamingfast/bstream"
 	"github.com/streamingfast/cli/sflags"
@@ -117,6 +119,12 @@ func rootRun(cmd *cobra.Command, args []string) error {
 	sinker.OnTerminating(func(err error) {
 		logger.Error("sinker terminating", zap.Error(err))
 	})
+
+	go func() {
+		err := trackPrice(db)
+		panic(err)
+	}()
+
 	err = sinker.Run(ctx)
 	if err != nil {
 		return fmt.Errorf("runnning sinker:%w", err)
@@ -130,6 +138,32 @@ func main() {
 	}
 
 	fmt.Println("Goodbye!")
+}
+
+func trackPrice(db *data.Psql, logger *zap.Logger) error {
+	for {
+		from, _, err := db.FetchLastPrice()
+		if err != nil {
+			return fmt.Errorf("fetching last price: %w", err)
+		}
+
+		prices := make(chan *price.HistoricalPrice)
+		go func() {
+			err := price.Fetch(from, time.Now(), prices, logger)
+			if err != nil {
+				panic(err)
+			}
+		}()
+
+		for historicalPrice := range prices {
+			t := time.Unix(historicalPrice.UnixTime, 0)
+			err := db.InsertPrice(t, historicalPrice.Value)
+			if err != nil {
+				return fmt.Errorf("inserting price: %w", err)
+			}
+		}
+		time.Sleep(2 * time.Minute)
+	}
 }
 
 func checkError(err error) {

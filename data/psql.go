@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 
 	"go.uber.org/zap"
 
@@ -35,6 +36,7 @@ type PreparedStatement struct {
 	insertMapConsumption     *sql.Stmt
 	insertBurn               *sql.Stmt
 	insertCursor             *sql.Stmt
+	insertPrice              *sql.Stmt
 }
 
 var preparedStatement *PreparedStatement
@@ -155,6 +157,11 @@ func NewPostgreSQL(psqlInfo *PsqlInfo, logger *zap.Logger) *Psql {
 		panic(err)
 	}
 
+	insertPrice, err := db.Prepare("INSERT INTO hivemapper.prices (timestamp, price) VALUES ($1, $2) ON CONFLICT (timestamp) DO NOTHING")
+	if err != nil {
+		panic(err)
+	}
+
 	preparedStatement = &PreparedStatement{
 		insertMint:               insertMing,
 		insertTransaction:        insertTransaction,
@@ -177,6 +184,7 @@ func NewPostgreSQL(psqlInfo *PsqlInfo, logger *zap.Logger) *Psql {
 		insertMapConsumption:     insertMapConsumption,
 		insertBurn:               insertBurn,
 		insertCursor:             insertCursor,
+		insertPrice:              insertPrice,
 	}
 
 	return &Psql{
@@ -577,6 +585,14 @@ func (p *Psql) insertBurns(dbTransactionID int64, burn *pb.Burn) (dbMintID int64
 	return
 }
 
+func (p *Psql) InsertPrice(timestamp time.Time, price float64) error {
+	_, err := preparedStatement.insertPrice.Exec(timestamp, price)
+	if err != nil {
+		return fmt.Errorf("inserting price: %w", err)
+	}
+	return nil
+}
+
 func (p *Psql) HandleBurns(dbBlockID int64, burns []*pb.Burn) error {
 	for _, burn := range burns {
 		dbTransactionID, err := p.handleTransaction(dbBlockID, burn.TrxHash)
@@ -634,6 +650,16 @@ func (p *Psql) FetchCursor() (*sink.Cursor, error) {
 		return sink.NewCursor(cursor)
 	}
 	return nil, nil
+}
+
+func (p *Psql) FetchLastPrice() (timestamp time.Time, price float64, err error) {
+	row := p.db.QueryRow("SELECT timestamp, price FROM hivemapper.prices ORDER BY timestamp DESC LIMIT 1")
+	if row.Err() != nil {
+		return time.Now(), 0, fmt.Errorf("selecting price: %w", row.Err())
+	}
+
+	err = row.Scan(&timestamp, &price)
+	return timestamp, price, err
 }
 
 func (p *Psql) BeginTransaction() error {
