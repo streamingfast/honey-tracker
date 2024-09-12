@@ -121,7 +121,7 @@ func rootRun(cmd *cobra.Command, args []string) error {
 	})
 
 	go func() {
-		err := trackPrice(db)
+		err := trackPrice(db, logger)
 		panic(err)
 	}()
 
