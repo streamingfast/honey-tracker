@@ -235,7 +235,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	iframeUrl := METABASE_SITE_URL + "/embed/dashboard/" + tokenString
+	iframeUrl := METABASE_SITE_URL + "/embed/dashboard/" + tokenString + "#bordered=true&titled=true"
 
 	tmplData := PageData{
 		IFrameUrl: iframeUrl,
@@ -260,8 +260,8 @@ const tmpl = `
 <iframe
     src="{{.IFrameUrl}}"
     frameborder="0"
-    width="100%"
-    height="100%"
+    width="90%"
+    height="90%"
     allowtransparency
 ></iframe></body>
 </html>
