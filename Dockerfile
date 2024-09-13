@@ -6,6 +6,8 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
     ca-certificates libssl1.1 vim strace lsof curl jq && \
     rm -rf /var/cache/apt /var/lib/apt/lists/*
 
+RUN python -m pip install dbt-core dbt-postgres
+
 ADD /honey-tracker /app/honey-tracker
 
 ENV PATH "/app:$PATH"
