@@ -258,7 +258,7 @@ const tmpl = `
 </head>
 <body>
 <iframe
-    src="{{.iframeUrl}}"
+    src="{{.IFrameUrl}}"
     frameborder="0"
     width="100%"
     height="100%"
