@@ -17,4 +17,4 @@ hivemapper:
       dbname: hivemapper
       schema: hivemapper
 
-  target: dev
+  target: prod
