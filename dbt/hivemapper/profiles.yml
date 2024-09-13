@@ -10,10 +10,10 @@ hivemapper:
       schema: hivemapper
     prod:
       type: postgres
-      host: localhost
+      host: 10.96.48.31
       user: dev
       password: "{{ env_var('DBT_PASSWORD') }}"
-      port: 5433
+      port: 5432
       dbname: hivemapper
       schema: hivemapper
 
