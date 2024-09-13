@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/exec"
 	"time"
 
 	"github.com/streamingfast/honey-tracker/price"
@@ -125,6 +126,11 @@ func rootRun(cmd *cobra.Command, args []string) error {
 		panic(err)
 	}()
 
+	go func() {
+		err := runDBT(logger)
+		panic(err)
+	}()
+
 	err = sinker.Run(ctx)
 	if err != nil {
 		return fmt.Errorf("runnning sinker:%w", err)
@@ -138,6 +144,19 @@ func main() {
 	}
 
 	fmt.Println("Goodbye!")
+}
+
+func runDBT(logger *zap.Logger) error {
+	for {
+		cmd := exec.Command("/usr/local/bin/dbt", "run", "--profiles-dir", "/app/hivemapper", "--project-dir", "/app/hivemapper")
+		output, err := cmd.CombinedOutput()
+		if err != nil {
+			logger.Error("running dbt", zap.Error(err), zap.ByteString("output", output))
+			return fmt.Errorf("running dbt: %w", err)
+		}
+
+		time.Sleep(5 * time.Minute)
+	}
 }
 
 func trackPrice(db *data.Psql, logger *zap.Logger) error {

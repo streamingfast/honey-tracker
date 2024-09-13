@@ -12,6 +12,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
 RUN pip install dbt-core dbt-postgres
 
 ADD /honey-tracker /app/honey-tracker
+ADD /dbt/hivemapper /app/hivemapper
 
 ENV PATH "/app:$PATH"
 
