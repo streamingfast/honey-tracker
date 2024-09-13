@@ -148,6 +148,7 @@ func main() {
 
 func runDBT(logger *zap.Logger) error {
 	for {
+		logger.Info("running dbt")
 		cmd := exec.Command("/usr/local/bin/dbt", "run", "--profiles-dir", "/app/hivemapper", "--project-dir", "/app/hivemapper")
 		output, err := cmd.CombinedOutput()
 		if err != nil {
