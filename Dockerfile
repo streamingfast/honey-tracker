@@ -9,7 +9,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
     DEBIAN_FRONTEND=noninteractive pip install cryptography~=3.4 && \
     rm -rf /var/cache/apt /var/lib/apt/lists/*
 
-RUN python -m pip install dbt-core dbt-postgres
+RUN pip install dbt-core dbt-postgres
 
 ADD /honey-tracker /app/honey-tracker
 
