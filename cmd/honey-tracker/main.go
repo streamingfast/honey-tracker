@@ -235,7 +235,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	iframeUrl := METABASE_SITE_URL + "/embed/dashboard/" + tokenString + "#bordered=true&titled=true"
+	iframeUrl := METABASE_SITE_URL + "/embed/dashboard/" + tokenString
 
 	tmplData := PageData{
 		IFrameUrl: iframeUrl,
