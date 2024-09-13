@@ -3,16 +3,19 @@ package main
 import (
 	"context"
 	"fmt"
+	"html/template"
+	"log"
+	"net/http"
 	"os"
 	"os/exec"
 	"time"
 
-	"github.com/streamingfast/honey-tracker/price"
-
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/spf13/cobra"
 	"github.com/streamingfast/bstream"
 	"github.com/streamingfast/cli/sflags"
 	"github.com/streamingfast/honey-tracker/data"
+	"github.com/streamingfast/honey-tracker/price"
 	"github.com/streamingfast/logging"
 	sink "github.com/streamingfast/substreams-sink"
 	"github.com/streamingfast/substreams/client"
@@ -131,6 +134,10 @@ func rootRun(cmd *cobra.Command, args []string) error {
 		panic(err)
 	}()
 
+	go func() {
+		serveHttp()
+	}()
+
 	err = sinker.Run(ctx)
 	if err != nil {
 		return fmt.Errorf("runnning sinker:%w", err)
@@ -184,6 +191,86 @@ func trackPrice(db *data.Psql, logger *zap.Logger) error {
 		}
 		time.Sleep(2 * time.Minute)
 	}
+}
+
+const METABASE_SITE_URL = "http://34.170.245.114:3000"
+
+var METABASE_SECRET_KEY = os.Getenv("SECRET_KEY")
+
+type CustomClaims struct {
+	Resource map[string]int         `json:"resource"`
+	Params   map[string]interface{} `json:"params"`
+	jwt.RegisteredClaims
+}
+
+type PageData struct {
+	IFrameUrl string
+}
+
+func handler(w http.ResponseWriter, r *http.Request) {
+
+	claims := CustomClaims{
+		Resource: map[string]int{"dashboard": 1},
+		Params:   map[string]interface{}{},
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 10)),
+		},
+	}
+
+	// Create a new token object
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	secretKey := []byte(METABASE_SECRET_KEY)
+
+	tokenString, err := token.SignedString(secretKey)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		fmt.Printf("error: %v\n", err)
+		return
+	}
+
+	tmpl, err := template.New("webpage").Parse(tmpl)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		fmt.Printf("error: %v\n", err)
+		return
+	}
+
+	iframeUrl := METABASE_SITE_URL + "/embed/dashboard/" + tokenString + "#bordered=true&titled=true"
+
+	tmplData := PageData{
+		IFrameUrl: iframeUrl,
+	}
+
+	err = tmpl.Execute(w, tmplData)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		fmt.Printf("error: %v\n", err)
+		return
+	}
+}
+
+const tmpl = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hivemaper Dashboard</title>
+</head>
+<body>
+<iframe
+    src="{{.iframeUrl}}"
+    frameborder="0"
+    width="100%"
+    height="100%"
+    allowtransparency
+></iframe></body>
+</html>
+`
+
+func serveHttp() {
+	http.HandleFunc("/", handler)
+	log.Println("Starting server on :8080")
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
 func checkError(err error) {
