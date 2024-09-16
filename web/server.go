@@ -121,11 +121,15 @@ const tmpl = `
 
 <div class="row-container">
   <div class="first-row">
-	<img src="https://cdn.prod.website-files.com/649aef4c9068091b737a9baf/64c3e6ca809ba2f4f2d76359_streamingfast-p-500.png" width=150 height=63></img>
-	<span>Hivemaper Dashboard</span>
+	<div style="display: flex; align-items: center; padding-left: 40px; padding-top: 20px; padding-bottom: 20px;">
+		<!-- img src="https://cdn.prod.website-files.com/649aef4c9068091b737a9baf/64c3e6ca809ba2f4f2d76359_streamingfast-p-500.png" width=150 height=63></img -->
+		<span style="font-family:sans-serif; font-weight: bold; font-size: 26px; color:#4F5671;">Hivemapper - Powered by The Graph Substreams</span>
+	</div>
+	<div style="padding-left: 25px;">
     <button class="round-button" onclick="window.location.href='./'">Overview</button>
     <button class="round-button" onclick="window.location.href='./?dashboard=33'">Fleet Dashboard</button>
     <button class="round-button" onclick="window.location.href='./?dashboard=34'">Driver Dashboard</button>
+	</div>
 
   </div>
 	<iframe	
