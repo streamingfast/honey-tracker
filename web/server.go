@@ -12,7 +12,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-const METABASE_SITE_URL = "http://metabase.streamingfast.io"
+const METABASE_SITE_URL = "https://metabase.streamingfast.io"
 
 var METABASE_SECRET_KEY = os.Getenv("SECRET_KEY")
 
