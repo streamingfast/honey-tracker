@@ -121,9 +121,18 @@ const tmpl = `
 
 <div class="row-container">
   <div class="first-row">
-	<div style="display: flex; align-items: center; padding-left: 40px; padding-top: 20px; padding-bottom: 20px;">
-		<!-- img src="https://cdn.prod.website-files.com/649aef4c9068091b737a9baf/64c3e6ca809ba2f4f2d76359_streamingfast-p-500.png" width=150 height=63></img -->
-		<span style="font-family:sans-serif; font-weight: bold; font-size: 26px; color:#4F5671;">Hivemapper - Powered by The Graph Substreams</span>
+	<div style="display: flex; align-items: center; padding-left: 40px; padding-top: 5px; padding-bottom: 5px;">
+		<a href="https://hivemapper.com/">
+			<img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRxugF0W5SMUWI-Pp0abVDJ8zWDP8UJ5ccWJQ8zzYgsgUev7maTTasAWaD123-LTPuAl30&usqp=CAU" height=50/>
+		</a>
+		<span style="padding-left:10px; width:100%; font-family:sans-serif; font-weight: bold; font-size: 26px; color:#4F5671;">Hivemapper</span>
+		<span style="font-family:sans-serif; font-weight: bold; font-size: 18px; color:#4F5671; white-space: nowrap; padding-right:15px">Powered by:</span>
+		<a href="https://thegraph.com/">
+			<img src="https://cdn.prod.website-files.com/649aef4c9068091b737a9baf/66ad5cd70dec61e829ac393d_The%20Graph%20-%20Logo%20-%20Dark.svg"  height=40/>
+		</a>
+		<a href="https://www.streamingfast.io/#substreams">
+			<img style="padding-top: 5px" src="https://cdn.prod.website-files.com/649aef4c9068091b737a9baf/65119d95beb11cb3b1c4583c_Substreams-Tagline-color-p-800.png" height=75/>
+		</a>
 	</div>
 	<div style="padding-left: 25px;">
     <button class="round-button" onclick="window.location.href='./'">Overview</button>
