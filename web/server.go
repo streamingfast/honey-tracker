@@ -16,8 +16,9 @@ import (
 
 const METABASE_SITE_URL = "https://metabase.streamingfast.io"
 
-// const HIVEMPPER_SITE_URL = "https://hivemapper.streamingfast.io"
-const HIVEMPPER_SITE_URL = "http://localhost:8080"
+const HIVEMPPER_SITE_URL = "https://hivemapper.streamingfast.io"
+
+//const HIVEMPPER_SITE_URL = "http://localhost:8080"
 
 var METABASE_SECRET_KEY = os.Getenv("SECRET_KEY")
 
