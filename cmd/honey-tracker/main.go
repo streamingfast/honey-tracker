@@ -132,8 +132,9 @@ func rootRun(cmd *cobra.Command, args []string) error {
 		panic(err)
 	}()
 
+	server := &web.Server{}
 	go func() {
-		web.ServeHttp()
+		server.ServeHttp()
 	}()
 
 	err = sinker.Run(ctx)

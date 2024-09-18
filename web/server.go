@@ -5,6 +5,8 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
 	"os"
 	"strconv"
 	"time"
@@ -13,6 +15,9 @@ import (
 )
 
 const METABASE_SITE_URL = "https://metabase.streamingfast.io"
+
+// const HIVEMPPER_SITE_URL = "https://hivemapper.streamingfast.io"
+const HIVEMPPER_SITE_URL = "http://localhost:8080"
 
 var METABASE_SECRET_KEY = os.Getenv("SECRET_KEY")
 
@@ -26,7 +31,8 @@ type PageData struct {
 	IFrameUrl string
 }
 
-func handler(w http.ResponseWriter, r *http.Request) {
+func handleIFrame(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Handling request:", r.URL.Path)
 	dashboard := 1
 	dashboardString := r.URL.Query().Get("dashboard")
 	if dashboardString != "" {
@@ -70,7 +76,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	iframeURL := METABASE_SITE_URL + "/embed/dashboard/" + tokenString + "#bordered=false&titled=false"
+	iframeURL := HIVEMPPER_SITE_URL + "/embed/dashboard/" + tokenString + "#bordered=false&titled=false"
 	fmt.Println("iframeURL: " + iframeURL)
 
 	tmplData := PageData{
@@ -84,6 +90,15 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	fmt.Println("Done rendering")
+}
+
+func (s *Server) handleRoot(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path == "/" {
+		handleIFrame(w, r)
+		return
+	}
+	r.Host = s.metabaseUrl.Host
+	s.proxy.ServeHTTP(w, r)
 }
 
 const tmpl = `
@@ -148,11 +163,12 @@ const tmpl = `
 	<iframe	
 		class="second-row"
     	src="{{ .IFrameUrl }}"
-		sandbox="allow-scripts allow-same-origin"
+		sandbox="allow-scripts allow-same-origin allow-downloads"
     	frameborder="0"
     	width="100%"
     	height="100%"
 		allow="fullscreen"
+
 	></iframe>
 </div>
 
@@ -160,27 +176,46 @@ const tmpl = `
 </html>
 `
 
-//style="position:fixed; top:0px; left:0; bottom:100; right:0; width:100%; height:100%; border:none; margin-top:100px; padding:0; overflow:hidden; z-index:999999;"
-//const tmpl = `
-//<!DOCTYPE html>
-//<html lang="en">
-//<head>
-//    <meta charset="UTF-8">
-//    <title>Hivemaper Dashboard</title>
-//</head>
-//<body>
-//<iframe
-//    src="{{.IFrameUrl}}"
-//    frameborder="0"
-//    width="90%"
-//    height="90%"
-//    allowtransparency
-//></iframe></body>
-//</html>
-//`
+// style="position:fixed; top:0px; left:0; bottom:100; right:0; width:100%; height:100%; border:none; margin-top:100px; padding:0; overflow:hidden; z-index:999999;"
+// const tmpl = `
+// <!DOCTYPE html>
+// <html lang="en">
+// <head>
+//
+//	<meta charset="UTF-8">
+//	<title>Hivemaper Dashboard</title>
+//
+// </head>
+// <body>
+// <iframe
+//
+//	src="{{.IFrameUrl}}"
+//	frameborder="0"
+//	width="90%"
+//	height="90%"
+//	allowtransparency
+//
+// ></iframe></body>
+// </html>
+// `
+type Server struct {
+	proxy       *httputil.ReverseProxy
+	metabaseUrl *url.URL
+}
 
-func ServeHttp() {
-	http.HandleFunc("/", handler)
-	log.Println("Starting server on :8080")
+func (s *Server) ServeHttp() {
+	url, err := url.Parse(METABASE_SITE_URL)
+	if err != nil {
+		log.Fatal(err)
+	}
+	s.metabaseUrl = url
+
+	proxy := httputil.NewSingleHostReverseProxy(url)
+
+	s.proxy = proxy
+
+	http.HandleFunc("/", s.handleRoot)
+
+	log.Println("starting server on :8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
