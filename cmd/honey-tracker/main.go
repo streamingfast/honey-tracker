@@ -7,13 +7,12 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/streamingfast/honey-tracker/web"
-
 	"github.com/spf13/cobra"
 	"github.com/streamingfast/bstream"
 	"github.com/streamingfast/cli/sflags"
 	"github.com/streamingfast/honey-tracker/data"
 	"github.com/streamingfast/honey-tracker/price"
+	"github.com/streamingfast/honey-tracker/web"
 	"github.com/streamingfast/logging"
 	sink "github.com/streamingfast/substreams-sink"
 	"github.com/streamingfast/substreams/client"

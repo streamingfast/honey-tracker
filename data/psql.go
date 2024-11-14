@@ -6,12 +6,11 @@ import (
 	"fmt"
 	"time"
 
-	"go.uber.org/zap"
-
 	_ "github.com/lib/pq"
 	pb "github.com/streamingfast/honey-tracker/data/pb/hivemapper/v1"
 	sink "github.com/streamingfast/substreams-sink"
 	pbsubstreams "github.com/streamingfast/substreams/pb/sf/substreams/v1"
+	"go.uber.org/zap"
 )
 
 type PreparedStatement struct {
@@ -243,7 +242,7 @@ func (p *Psql) HandleInitializedAccount(dbBlockID int64, initializedAccounts []*
 }
 
 func (p *Psql) HandleBlocksUndo(lastValidBlockNum uint64) error {
-	_, err := p.tx.Exec("DELETE CASCADE FROM solana_tokens.blocks WHERE num > $1", lastValidBlockNum)
+	_, err := p.tx.Exec("DELETE FROM solana_tokens.blocks WHERE num > $1", lastValidBlockNum)
 	if err != nil {
 		return fmt.Errorf("deleting block from %d: %w", lastValidBlockNum, err)
 	}
