@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"time"
 
 	"go.uber.org/zap"
@@ -83,9 +84,9 @@ func fetch(fromTime time.Time, toTime time.Time, period string, logger *zap.Logg
 	if err != nil {
 		return nil, fmt.Errorf("creating request: %w", err)
 	}
+	k := os.Getenv("BIRDEYE_API_KEY")
+	req.Header.Add("X-Api-Key", k)
 
-	//todo: before making the we need to set this to a env var
-	req.Header.Add("X-Api-Key", "c28c10a82a614930af83a48a3b47189d")
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("sending request: %w", err)
