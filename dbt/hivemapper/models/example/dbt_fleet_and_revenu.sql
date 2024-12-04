@@ -20,4 +20,4 @@ FROM
 GROUP BY
     f.address
 ORDER BY
-    rank;
+    rank
