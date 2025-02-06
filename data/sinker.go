@@ -36,7 +36,6 @@ func (s *Sinker) Run(ctx context.Context) error {
 	go func() {
 		for {
 			time.Sleep(1 * time.Second)
-			s.Sinker.AverageBlockSec().Add(s.blockSecCount)
 			s.blockSecCount = 0
 		}
 	}()
@@ -47,8 +46,6 @@ func (s *Sinker) Run(ctx context.Context) error {
 			if s.lastClock != nil {
 				s.logger.Info("progress_block", zap.Stringer("block", s.lastClock))
 			}
-			s.logger.Info(s.Sinker.AverageBlockSec().String())
-			s.logger.Info(s.Sinker.AverageBlockTimeProcessing().String() + "ms")
 		}
 	}()
 
@@ -61,14 +58,12 @@ func (s *Sinker) Run(ctx context.Context) error {
 }
 
 func (s *Sinker) HandleBlockScopedData(ctx context.Context, data *pbsubstreamsrpc.BlockScopedData, isLive *bool, cursor *sink.Cursor) (err error) {
-	startTime := time.Now()
 	s.blockSecCount++
 	s.lastClock = data.Clock
 	hasTransaction := false
 	s.db.TransactionIDs = map[string]int64{}
 
 	defer func() {
-		s.Sinker.AverageBlockTimeProcessing().Add(time.Since(startTime).Milliseconds())
 		if err != nil {
 			if hasTransaction {
 				e := s.db.RollbackTransaction()

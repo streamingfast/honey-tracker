@@ -82,17 +82,16 @@ func rootRun(cmd *cobra.Command, args []string) error {
 	clientConfig := client.NewSubstreamsClientConfig(
 		endpoint,
 		apiToken,
+		client.JWT,
 		flagInsecure,
 		flagPlaintext,
 	)
 
-	pkg, module, outputModuleHash, br, err := sink.ReadManifestAndModuleAndBlockRange(manifestPath, nil, outputModuleName, expectedOutputModuleType, false, "", logger)
+	pkg, module, outputModuleHash, br, err := sink.ReadManifestAndModuleAndBlockRange(manifestPath, "sol-mainnet", nil, outputModuleName, expectedOutputModuleType, false, "", logger)
 	checkError(err)
 
 	options := []sink.Option{
 		sink.WithBlockRange(br),
-		sink.WithAverageBlockSec("average received block second", 30),
-		sink.WithAverageBlockTimeProcessing("average block processing time", 1000),
 	}
 
 	if startBlock > 0 && stopBlock > 0 {
@@ -105,6 +104,7 @@ func rootRun(cmd *cobra.Command, args []string) error {
 
 	s, err := sink.New(
 		sink.SubstreamsModeProduction,
+		false,
 		pkg,
 		module,
 		outputModuleHash,
