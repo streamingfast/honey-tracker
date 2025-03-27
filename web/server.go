@@ -164,7 +164,7 @@ const tmpl = `
 	<iframe	
 		class="second-row"
     	src="{{ .IFrameUrl }}"
-		sandbox="allow-scripts allow-same-origin allow-downloads"
+		sandbox="allow-scripts allow-same-origin allow-downloads allow-forms"
     	frameborder="0"
     	width="100%"
     	height="100%"
