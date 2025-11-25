@@ -11,7 +11,6 @@ var RootCmd = &cobra.Command{
 	Use:   "honey-tracker",
 	Short: "Hivemapper Honey Tracker",
 	RunE:  rootRun,
-	Args:  cobra.ExactArgs(3),
 }
 
 func init() {
