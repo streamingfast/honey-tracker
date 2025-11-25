@@ -18,9 +18,7 @@ func init() {
 
 func rootRun(cmd *cobra.Command, args []string) error {
 	server := &web.Server{}
-	go func() {
-		server.ServeHttp()
-	}()
+	server.ServeHttp()
 
 	return nil
 }
