@@ -3,7 +3,7 @@ FROM ubuntu:24.04
 RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get -y install \
     gcc libssl-dev pkg-config protobuf-compiler \
-    ca-certificates libssl1.1 vim strace lsof curl jq git libpq-dev python-dev python3-pip && \
+    ca-certificates libssl1.1 vim strace lsof curl jq git python3-pip && \
     DEBIAN_FRONTEND=noninteractive apt-get remove python-cffi && \
     DEBIAN_FRONTEND=noninteractive pip install --upgrade cffi && \
     DEBIAN_FRONTEND=noninteractive pip install cryptography~=3.4 && \
